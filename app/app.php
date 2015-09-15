@@ -7,13 +7,25 @@ $app->authentication = function ($c) use ($app) {
 };
 
 
+
+$app->hook('slim.after.router', function () use ($app) {
+   	$request = $app->request;
+    $response = $app->response;
+
+    $app->log->debug('['.date('H:i:s', time()).'] Request path: ' . $request->getPathInfo());
+    $app->log->debug('['.date('H:i:s', time()).'] Request body: ' . $request->getBody());
+	$app->log->debug('['.date('H:i:s', time()).'] Response status: ' . $response->getStatus());
+
+});
+
+
 $app->get('/hello/:name', function ($name) {
     echo "Hello, $name";
 
 });
 
 
-$app->post('/sync/contactspace', function() {
+$app->post('/create/deal', function() {
 	//needed for 
     /*
     $entityBody = file_get_contents('php://input');	
@@ -28,4 +40,5 @@ $app->post('/sync/contactspace', function() {
 			$fields[$key] = $property->value;
 	}
 	*/
+	echo "deal created";
 });

@@ -5,7 +5,9 @@ require 'vendor/autoload.php';
 
 
 \Slim\Slim::registerAutoloader();
-$app = new \Slim\Slim();
+
+$logWriter = new \Slim\LogWriter(fopen(__DIR__ . '/logs/log-'.date('Y-m-d', time()), 'a'));
+$app = new \Slim\Slim(array('log.writer' => $logWriter));
 
 
 // Dependency Injection Containers
