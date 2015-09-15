@@ -8,7 +8,7 @@ require 'vendor/autoload.php';
 \Slim\Slim::registerAutoloader();
 
 if($_SERVER['HTTP_HOST'] == "api-1800approved.rhcloud.com") {
-	$logWriter = new \Slim\LogWriter(fopen(__DIR__ . '/logs-os'), 'a'));
+	$logWriter = new \Slim\LogWriter(fopen(__DIR__ . '/logs-os', 'a'));
 } else {
 	$logWriter = new \Slim\LogWriter(fopen(__DIR__ . '/logs/log-'.date('Y-m-d', time()), 'a'));
 }
