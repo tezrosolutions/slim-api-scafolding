@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "76305576a19e30eec4b8559eba2233f4",
-    "content-hash": "0d083afcf22feb09e5697cde8080310c",
+    "hash": "df87deed1ef59798504fd26184012db5",
+    "content-hash": "2e4121b095d883b28eff403f592344b7",
     "packages": [
         {
             "name": "doctrine/instantiator",
@@ -60,6 +60,42 @@
                 "instantiate"
             ],
             "time": "2015-06-14 21:17:01"
+        },
+        {
+            "name": "fungku/hubspot",
+            "version": "v1.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/fungku/hubspot.git",
+                "reference": "05dad0a2386e6cd125d96cc8fbe4403ff65f5160"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/fungku/hubspot/zipball/05dad0a2386e6cd125d96cc8fbe4403ff65f5160",
+                "reference": "05dad0a2386e6cd125d96cc8fbe4403ff65f5160",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Fungku\\HubSpot": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "fungku",
+                    "email": "fungku@gmail.com"
+                }
+            ],
+            "description": "HubSpot PHP API client",
+            "time": "2014-08-19 16:26:55"
         },
         {
             "name": "indeyets/pake",
@@ -1644,12 +1680,12 @@
             "version": "v2.7.4",
             "source": {
                 "type": "git",
-                "url": "git@github.com:symfony/Console.git",
+                "url": "https://github.com/symfony/Console.git",
                 "reference": "f1f7376766394f409b9b33a57a5675a52f8aad93"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Console/zipball/f1f7376766394f409b9b33a57a5675a52f8aad93",
+                "url": "https://api.github.com/repos/symfony/Console/zipball/9ff9032151186bd66ecee727d728f1319f52d1d8",
                 "reference": "f1f7376766394f409b9b33a57a5675a52f8aad93",
                 "shasum": ""
             },
