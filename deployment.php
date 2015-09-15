@@ -1,2 +1,4 @@
 <?php 
-exec("php composer.phar install");
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+exec("unzip vendor.zip");
