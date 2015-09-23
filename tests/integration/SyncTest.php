@@ -1,7 +1,7 @@
 <?php
 class SyncTest extends LocalWebTestCase
 {
-    public function testHello()
+    /*public function testHello()
     {
         $this->client->get('/hello/William');
         $this->assertEquals(200, $this->client->response->status());
@@ -24,6 +24,12 @@ class SyncTest extends LocalWebTestCase
 
         //checking if ContactSpace synchronization was done without any problem
         $this->assertSame('200', $this->client->response->body());
+    }*/
+
+    public function testEmailLeads()
+    {
+        $this->client->post('/emailleads/synchronize', array("username" => "umair@dev.1800approved.com.au", "password" => "U3D*vDfkF(;A", "type" => "test"));
+        $this->assertEquals(200, $this->client->response->status());
     }
 }
 /* End of file SyncTest.php */

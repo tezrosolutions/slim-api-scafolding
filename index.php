@@ -18,8 +18,13 @@ if($_SERVER['HTTP_HOST'] == "api-1800approved.rhcloud.com") {
 	$logWriter = new \Slim\LogWriter(fopen(__DIR__ . '/logs/log-'.date('Y-m-d', time()), 'a'));
 }
 
+$customConfig = array(
+					"HUBSPOT_API_KEY" => "6af915fd-806f-483a-b10b-bcb9f94b239d",
+					"HUBSPOT_PORTAL_ID" => "695602"
+				);
 
-$app = new \Slim\Slim(array('log.writer' => $logWriter));
+$app = new \Slim\Slim(array('log.writer' => $logWriter, 'custom' => $customConfig ));
+
 
 
 // Dependency Injection Containers

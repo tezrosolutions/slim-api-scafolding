@@ -252,3 +252,30 @@ $app->group('/deal', function () use ($app) {
 	
 	});
 });
+
+
+$app->group('/emailleads', function() use ($app) {
+	$app->post('/synchronize', function() use ($app) {
+
+		require_once('app/lib/emailleads.php');
+		$_instanceEmailLeads = new Custom\Libs\EmailLeads();
+
+		$type = $app->request->post("type");
+
+		$_instanceEmailLeads->username = $app->request->post("username");
+
+		$_instanceEmailLeads->password = $app->request->post("password");
+
+
+		
+		switch($type) {
+			case 'carsales':
+				break;
+			case 'loanplace':
+				break;
+			case 'test':
+				$_instanceEmailLeads->synchronizeTestEmailLeads($app);
+				break;
+		}
+	});
+});
