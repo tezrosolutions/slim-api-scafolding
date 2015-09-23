@@ -18,7 +18,7 @@ class EmailLeads {
 
     public function synchronizeTestEmailLeads($app) {
         /* try to connect */
-        $inbox = imap_open($this->hostname, $this->username, $this->password) or die('Cannot connect to Server: ' . imap_last_error());
+        $inbox = imap_open($this->host, $this->username, $this->password) or die('Cannot connect to Server: ' . imap_last_error());
 
 
         /* grab emails */
