@@ -5,8 +5,9 @@
 namespace Custom\Libs;
 class ContactSpace {
 	protected $_url = "https://apidev.contactspace.com";
-	public $_apiKey = "uKNcpIk930F55kw4E3VxUnbWG0NLk4oX";
-	public $_datasetID = 171;
+	public $_apiKey = "approvhdjn5kfgkjhsygeiuhfnkjndg81jsdn800";
+	public $_datasetID = 1;
+  public $_initiativeID = 25;
 	public $_xmlData;
 
 	public function __init() {
@@ -15,7 +16,8 @@ class ContactSpace {
 
 	public function insertRecord($xml) {
 
-		$this->postURL = $this->_url.'/?apikey='.$this->_apiKey.'&function=InsertRecord&module=data&datasetid='.$this->_datasetID.'&xmldata='.$xml;
+		//$this->postURL = $this->_url.'/?apikey='.$this->_apiKey.'&function=InsertRecord&module=data&datasetid='.$this->_datasetID.'&initiativeid='.$this->_initiativeID.'&xmldata='.$xml;
+    $this->postURL = $this->_url.'/?apikey='.$this->_apiKey.'&function=InsertRecord&module=data&datasetid='.$this->_datasetID.'&xmldata='.$xml;
   		$ch = curl_init();
   		curl_setopt($ch, CURLOPT_URL, $this->postURL);
   		curl_setopt($ch, CURLOPT_HEADER, 1);
@@ -27,8 +29,17 @@ class ContactSpace {
   		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 
   		$result = curl_exec($ch);
-  		$info = curl_getinfo($ch);
-  		curl_close($ch);
-  		return $info;
+      
+      //$info is not used right now
+      $info = curl_getinfo($ch);
+
+      $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+      $body = substr($result, $header_size);
+
+      curl_close($ch);
+
+      
+      
+      return array($info['http_code'], $body);
 	}
 }
