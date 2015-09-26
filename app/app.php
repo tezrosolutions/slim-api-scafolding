@@ -175,7 +175,13 @@ $app->group('/deal', function () use ($app) {
 	
 
 	/**** Synchronizing deal to HubSpot ****/
-	if(array_key_exists('hubspot_owner_id', $fields)) {
+	if(!array_key_exists('hubspot_owner_id', $fields)) {
+		if($app->log->getEnabled())
+			$app->log->debug('['.date('H:i:s', time()).'] Deal Sync Warning: HubSpot owner missing, setting to 5219627');
+
+		$fields['hubspot_owner_id'] = '5219627';
+	}
+
 		$dealJSON = '{
             "associations": {
                 "associatedCompanyIds": [
@@ -240,16 +246,36 @@ $app->group('/deal', function () use ($app) {
 		} 
 		echo $dealSyncResponseArr[0];
 
-	} else {
-		if($app->log->getEnabled()) {
-			$app->log->debug('['.date('H:i:s', time()).'] Deal Sync Error: HubSpot owner is missing');
-		} 
-
-		echo false;
-		
-	}
+	
 
 
 	
+	});
+});
+
+
+$app->group('/emailleads', function() use ($app) {
+	$app->post('/synchronize', function() use ($app) {
+
+		require_once('app/lib/emailleads.php');
+		$_instanceEmailLeads = new Custom\Libs\EmailLeads();
+
+		$type = $app->request->post("type");
+
+		$_instanceEmailLeads->username = $app->request->post("username");
+
+		$_instanceEmailLeads->password = $app->request->post("password");
+
+
+		
+		switch($type) {
+			case 'carsales':
+				break;
+			case 'loanplace':
+				break;
+			case 'test':
+				$_instanceEmailLeads->synchronizeTestEmailLeads($app);
+				break;
+		}
 	});
 });

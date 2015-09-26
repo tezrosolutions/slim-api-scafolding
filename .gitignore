@@ -1,4 +1,6 @@
 vendor/*
 */logs/*
 logs/*
+error_log
 nbproject/*
+nbproject
