@@ -7,7 +7,7 @@ class ContactSpace {
 	protected $_url = "https://apidev.contactspace.com";
 	public $_apiKey = "approvhdjn5kfgkjhsygeiuhfnkjndg81jsdn800";
 	public $_datasetID = 1;
-  public $_initiativeID = 25;
+        public $_initiativeID = 25;
 	public $_xmlData;
 
 	public function __init() {

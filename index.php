@@ -4,6 +4,8 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 require 'vendor/autoload.php';
+require 'config/hubspot.php';
+require 'config/genius.php';
 
 
 
@@ -15,11 +17,15 @@ if($_SERVER['HTTP_HOST'] == "api-1800approved.rhcloud.com") {
 } else {
 	$logWriter = new \Slim\LogWriter(fopen(__DIR__ . '/logs/log-'.date('Y-m-d', time()), 'a'));
 }
+$customConfig = array();
 
-$customConfig = array(
-					"HUBSPOT_API_KEY" => "6af915fd-806f-483a-b10b-bcb9f94b239d",
-					"HUBSPOT_PORTAL_ID" => "695602"
-				);
+$customConfig['hubspot'] = array();
+$customConfig['hubspot']['config'] = $hubspotConfig;
+
+$customConfig['genius'] = array();
+$customConfig['genius']['coplCodes'] = $coplCodes;
+$customConfig['genius']['config'] = $geniusConfig;
+
 
 $app = new \Slim\Slim(array('log.writer' => $logWriter, 'custom' => $customConfig ));
 

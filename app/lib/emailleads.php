@@ -190,8 +190,8 @@ class EmailLeads {
                     $formGuid = '48a1c82e-00ff-4e34-be68-7718ad0389ee';
                     $appConfig = $app->config('custom');
 
-                    $hubspot = new Fungku\HubSpot($appConfig['HUBSPOT_API_KEY']);
-                    print $hubspot->forms()->submit($appConfig['HUBSPOT_PORTAL_ID'], $formGuid, $form_fields);
+                    $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
+                    print $hubspot->forms()->submit($appConfig['hubspot']['config']['HUBSPOT_PORTAL_ID'], $formGuid, $form_fields);
                 }
                 /*                 * *** DELETE EMAILS **** */
 
