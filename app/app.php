@@ -23,10 +23,14 @@ $app->hook('slim.after.router', function () use ($app) {
     $app->log->debug('[' . date('H:i:s', time()) . '] Response status: ' . $response->getStatus());
 });
 
+
+
 /* * ** Hello World **** */
 $app->get('/hello/:name', function ($name) use ($app) {
     echo "Hello, $name";
 });
+
+
 
 
 /**
@@ -140,6 +144,7 @@ $app->group('/contactspace', function () use ($app) {
 
 
 
+
 /**
  * Deal group
  * */
@@ -246,7 +251,15 @@ $app->group('/deal', function () use ($app) {
 });
 
 
+
+
+/**
+ * Email Leads group
+ * */
 $app->group('/emailleads', function() use ($app) {
+    /*
+     * Called from CRON to synchronize lead information in email messages to HubSpot 
+     */
     $app->post('/synchronize', function() use ($app) {
 
         require_once('app/lib/emailleads.php');
@@ -273,11 +286,20 @@ $app->group('/emailleads', function() use ($app) {
 });
 
 
+
+
+/**
+ * Genius group
+ * */
 $app->group('/genius', function() use ($app) {
+    /*
+     * Called from HubSpot to synchronize contact as a Genius loan application
+     * Receives JSON object in request body
+     */
     $app->post('/synchronize', function() use ($app) {
 
         require_once('app/lib/genius.php');
-        $instanceGenius = new Custom\Libs\Genius();
+        $instanceGenius = new Custom\Libs\Genius($app);
 
         $entityBody = $app->request->getBody();
 
