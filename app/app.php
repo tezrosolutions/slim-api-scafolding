@@ -285,7 +285,7 @@ $app->group('/genius', function() use ($app) {
         $hubspotData = json_decode($entityBody);
 
         $fields = array();
-        $fields['ID'] = time();
+        $fields['ID'] = $hubspotData->vid;
 
         //extracting contact information from HubSpot
         foreach ($hubspotData->properties as $key => $property) {
