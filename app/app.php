@@ -57,7 +57,8 @@ $app->group('/contactspace', function () use ($app) {
                     $key == "loan_purpose" || $key == "approved_loan_amount" || $key == "yes_i_accept" ||
                     $key == "employment_type_" || $key == "credit_status" || $key == "postal_code" ||
                     $key == "home_sts" || $key == "employment_length" || $key == "current_residency_length" ||
-                    $key == "marital_status" || $key == "number_of_children" || $key == "mobilephone")
+                    $key == "marital_status" || $key == "number_of_children" || $key == "mobilephone" || 
+                    $key == "broker_email" )
                 $fields[$key] = $property->value;
         }
 
@@ -124,6 +125,9 @@ $app->group('/contactspace', function () use ($app) {
 
         if (array_key_exists('number_of_children', $fields))
             $contactSpaceXML .= "<Number_of_Children>" . $fields['number_of_children'] . "</Number_of_Children>";
+        
+        if (array_key_exists('broker_email', $fields))
+            $contactSpaceXML .= "<Broker_email>" . $fields['broker_email'] . "</Broker_email>";
 
 
         $contactSpaceXML .= "</record>";
