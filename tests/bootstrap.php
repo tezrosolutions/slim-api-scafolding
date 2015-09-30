@@ -19,8 +19,13 @@ class LocalWebTestCase extends WebTestCase {
         require 'config/genius.php';
 
         $customConfig = array();
-        $customConfig['hubspot'] = $hubspotConfig;
-        $customConfig['coplCodes'] = $coplCodes;
+
+        $customConfig['hubspot'] = array();
+        $customConfig['hubspot']['config'] = $hubspotConfig;
+
+        $customConfig['genius'] = array();
+        $customConfig['genius']['coplCodes'] = $coplCodes;
+        $customConfig['genius']['config'] = $geniusConfig;
 
         $app = new \Slim\Slim(array(
             'version' => '0.0.0',

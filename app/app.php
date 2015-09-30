@@ -38,6 +38,52 @@ $app->get('/hello/:name', function ($name) use ($app) {
  * */
 $app->group('/contactspace', function () use ($app) {
 
+    $app->post("/updateHubSpot", function() use ($app) {
+        $callID = $app->request->post('CallID');
+
+
+        require_once('app/lib/contactspace.php');
+        $contactSpace = new Custom\Libs\ContactSpace();
+
+
+        //get call information from CS
+        $callInfoResponse = $contactSpace->getSingleRecord($callID);
+        if (count($callInfoResponse) == 2) {
+            if ($callInfoResponse[0] == 200) {
+                $callInfo = simplexml_load_string($callInfoResponse[1]);
+                if (isset($callInfo->records->record->Record_ID)) {
+                    $vid = $callInfo->records->record->Record_ID;
+
+                    $appConfig = $app->config('custom');
+                    $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
+
+                    $fields = array();
+                    if (isset($callInfo->records->record->Broker_email))
+                        $fields['broker_email'] = $callInfo->records->record->Broker_email;
+
+                    if (isset($callInfo->records->record->Lead_status))
+                        $fields['hs_lead_status'] = $callInfo->records->record->Lead_status;
+
+                    $hsUpdateResponse = $hubspot->contacts()->update_contact($vid, $fields);
+
+
+                    if ($app->log->getEnabled()) {
+                        $app->log->debug('[' . date('H:i:s', time()) . '] HS Update Request Body: ID: '. $vid . ' BODY: ' . json_encode($fields));
+                        $app->log->debug('[' . date('H:i:s', time()) . '] HS Update Response Body: ' . json_encode($hsUpdateResponse));
+                    }
+                    
+                    echo $hsUpdateResponse->status;
+                } else {
+                    echo "error";
+                }
+            } else {
+                echo "error";
+            }
+        } else {
+            echo "error";
+        }
+    });
+
     /*
      * Called from HubSpot to synchronize contact on ContactSpace
      * Receives JSON object in request body
@@ -57,8 +103,8 @@ $app->group('/contactspace', function () use ($app) {
                     $key == "loan_purpose" || $key == "approved_loan_amount" || $key == "yes_i_accept" ||
                     $key == "employment_type_" || $key == "credit_status" || $key == "postal_code" ||
                     $key == "home_sts" || $key == "employment_length" || $key == "current_residency_length" ||
-                    $key == "marital_status" || $key == "number_of_children" || $key == "mobilephone" || 
-                    $key == "broker_email" )
+                    $key == "marital_status" || $key == "number_of_children" || $key == "mobilephone" ||
+                    $key == "broker_email")
                 $fields[$key] = $property->value;
         }
 
@@ -125,7 +171,7 @@ $app->group('/contactspace', function () use ($app) {
 
         if (array_key_exists('number_of_children', $fields))
             $contactSpaceXML .= "<Number_of_Children>" . $fields['number_of_children'] . "</Number_of_Children>";
-        
+
         if (array_key_exists('broker_email', $fields))
             $contactSpaceXML .= "<Broker_email>" . $fields['broker_email'] . "</Broker_email>";
 
@@ -371,24 +417,24 @@ $app->group('/genius', function() use ($app) {
         } else {
             $fields['approved_loan_amount'] = "";
         }
-        
-        if(!empty($fields['marital_status']))
+
+        if (!empty($fields['marital_status']))
             $fields['marital'] = $instanceGenius->getCoplCodes("marital_statuses", $fields['marital_status'], 'maritalstatus');
         else
             $fields['marital'] = "";
-        
-        if(!empty($fields['loan_purpose']))
+
+        if (!empty($fields['loan_purpose']))
             $fields['leads_finance_type'] = $instanceGenius->getCoplCodes('loan_types', $fields['loan_purpose'], 'loantype'); //required
         else
             $fields['leads_finance_type'] = "";
-        
-        
-        if(!empty($fields['employment_type_']))
+
+
+        if (!empty($fields['employment_type_']))
             $fields['employment'] = $instanceGenius->getCoplCodes('employnents_types', $fields['employment_type_'], 'employementtype');
-        else 
+        else
             $fields['employment'] = "";
-        
-        if(!empty($fields['home_sts']))
+
+        if (!empty($fields['home_sts']))
             $fields['property'] = $instanceGenius->getCoplCodes('residential_statuses', $fields['home_sts'], 'residentialstatus');
         else
             $fields['property'] = "";
