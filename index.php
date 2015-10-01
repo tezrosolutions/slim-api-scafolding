@@ -29,6 +29,16 @@ $customConfig['genius']['config'] = $geniusConfig;
 
 $app = new \Slim\Slim(array('log.writer' => $logWriter, 'custom' => $customConfig ));
 
+/*$app->add(new \Slim\Middleware\HttpBasicAuthentication([
+    "realm" => "Protected",
+    "relaxed" => array("dev.1800approved.com.au", "localhost"),
+    "users" => [
+        "root" => "r0Ot_C0n643",
+        "genius" => "gEn1u5_C0n",
+        "hubspot" => "hUb5p0t_C0n",
+        "contactspace" => "c0nTa9t5Pac3"
+    ]
+]));*/
 
 
 // Dependency Injection Containers

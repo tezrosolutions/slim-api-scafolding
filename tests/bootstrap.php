@@ -33,6 +33,17 @@ class LocalWebTestCase extends WebTestCase {
             'mode' => 'testing',
             'custom' => $customConfig
         ));
+
+        $app->add(new \Slim\Middleware\HttpBasicAuthentication([
+            "realm" => "Protected",
+            "relaxed" => array("local.dev"),
+            "users" => [
+                "root" => "r0Ot_C0n643",
+                "genius" => "gEn1u5_C0n",
+                "hubspot" => "hUb5p0t_C0n"
+            ]
+        ]));
+
         // Include our core application file
         require PROJECT_ROOT . '/app/app.php';
         return $app;

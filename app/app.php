@@ -342,6 +342,16 @@ $app->group('/emailleads', function() use ($app) {
  * Genius group
  * */
 $app->group('/genius', function() use ($app) {
+
+     $app->post('/updateHubSpot', function() use ($app) {
+        $vid = $app->request->post("vid");
+
+        $gid = $app->request->post("gid");
+
+        $status = $app->request->post("status");
+
+        echo "not ready";
+     });
     /*
      * Called from HubSpot to synchronize contact as a Genius loan application
      * Receives JSON object in request body
