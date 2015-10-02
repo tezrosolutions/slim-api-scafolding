@@ -110,12 +110,11 @@ $app->group('/contactspace', function () use ($app) {
 
 
         //preparing XML to be posted on ContactSpace
-        $rID = time();
 
 
         require_once('app/lib/contactspace.php');
         $contactSpace = new Custom\Libs\ContactSpace();
-        $contactSpaceXML = "<record><Record_ID>" . $rID . "</Record_ID>";
+        $contactSpaceXML = "<record><Record_ID>" . $fields['vid'] . "</Record_ID>";
 
         if (array_key_exists('phone', $fields)) {
             $fields['phone'] = ltrim($fields['phone'], '0');
