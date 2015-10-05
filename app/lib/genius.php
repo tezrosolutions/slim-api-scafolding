@@ -10,7 +10,7 @@ class Genius {
 
     private $_appInstance;
 
-    public function __init($app) {
+    public function __construct($app) {
         $this->_appInstance = $app;
     }
 
@@ -34,8 +34,9 @@ class Genius {
 
     public function post($fields) {
 
-        $xml = "
-<?xml version='1.0' encoding='UTF-8'?>
+        //$xml = "
+/*<?xml version='1.0' encoding='UTF-8'?>*/
+$xml = "
 <Lead>
    <AccessCode>" . $fields['accessCode'] . "</AccessCode>
    <AccessPwd>" . $fields['accessPass'] . "</AccessPwd>
@@ -56,24 +57,24 @@ class Genius {
       " . $fields['coplArea'] . "
       " . $fields['coplPh'] . "
       " . $fields['coplMob'] . "
-      <EmailAddress>" . $fields['email'] . "</EmailAddress>
+      <EmailAddress>" . (isset($fields['email']) ? $fields['email'] : "") . "</EmailAddress>
       <UnitNo>" . $fields['unitno'] . "</UnitNo>
       <StreetNo>" . $fields['streetno'] . "</StreetNo>
       <Street>" . $fields['streetname'] . "</Street>
       <StreetType>" . $fields['streettype'] . "</StreetType>
       <Suburb>" . $fields['leads_city'] . "</Suburb>
       <State>" . $fields['leads_state'] . "</State>
-      <PostCode>" . $fields['zip'] . "</PostCode>
+      <PostCode>" . (isset($fields['zip']) ? $fields['zip'] : "") . "</PostCode>
       <TimeAtAddressYears>" . $fields['residyear'] . "</TimeAtAddressYears>
       <TimeAtAddressMonths>" . $fields['residmonth'] . "</TimeAtAddressMonths>
       <Status>" . $fields['property'] . "</Status>
       <DOB>" . $fields['fullBday'] . "</DOB>
       <MaritalStatus>" . $fields['marital'] . "</MaritalStatus>
-      <NoOfDependencies>" . $fields['number_of_children'] . "</NoOfDependencies>
+      <NoOfDependencies>" . (isset($fields['number_of_children']) ? $fields['number_of_children'] : "") . "</NoOfDependencies>
       <DriversLicenceNo>" . $fields['leads_lic'] . "</DriversLicenceNo>
       <RetailPrice>" . $fields['approved_loan_amount'] . "</RetailPrice>
       <EmploymentType>" . $fields['employment'] . "</EmploymentType>
-      <TimeEmployedYears>" . $fields['employment_length'] . "</TimeEmployedYears>
+      <TimeEmployedYears>" . (isset($fields['employment_length']) ? $fields['employment_length'] : "") . "</TimeEmployedYears>
       <TimeEmployedMonths>" . $fields['emplengthmonth'] . "</TimeEmployedMonths>
       <Mortgage>" . $fields['mortgagePayments'] . "</Mortgage>
       <RentPayment>" . $fields['rentPayments'] . "</RentPayment>
@@ -92,9 +93,9 @@ class Genius {
 </Lead>";
 
 
-
+        $appConfig = $this->_appInstance->config('custom');
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->_appInstance['genius']['config']['API_ENDPOINT']);
+        curl_setopt($ch, CURLOPT_URL, $appConfig['genius']['config']['API_ENDPOINT']);
         curl_setopt($ch, CURLOPT_HEADER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLINFO_HEADER_OUT, true);
@@ -104,9 +105,24 @@ class Genius {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 
         $result = curl_exec($ch);
-        //$info = curl_getinfo($ch);
+
+        //$info is not used right now
+        $info = curl_getinfo($ch);
+
+        $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+        $body = substr($result, $header_size);
+
+
         curl_close($ch);
-        return $result;
+        
+        if ($this->_appInstance->log->getEnabled()) {
+            $this->_appInstance->log->debug('[' . date('H:i:s', time()) . '] Genius Sync Request URL: ' . $appConfig['genius']['config']['API_ENDPOINT']);
+            $this->_appInstance->log->debug('[' . date('H:i:s', time()) . '] Genius Sync Request: ' . $xml);
+            $this->_appInstance->log->debug('[' . date('H:i:s', time()) . '] Genius Sync Response Body: ' . $body);
+            $this->_appInstance->log->debug('[' . date('H:i:s', time()) . '] Genius Sync Response: ' . $info['http_code']);
+        }
+
+        return array($info['http_code'], $body);
     }
 
 }

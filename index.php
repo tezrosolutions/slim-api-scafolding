@@ -30,7 +30,6 @@ $customConfig['genius']['config'] = $geniusConfig;
 $app = new \Slim\Slim(array('log.writer' => $logWriter, 'custom' => $customConfig ));
 
 $app->add(new \Slim\Middleware\HttpBasicAuthentication([
-    "path" => "/hello",
     "realm" => "Protected",
     "relaxed" => array("dev.1800approved.com.au", "localhost"),
     "users" => [

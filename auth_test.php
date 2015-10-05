@@ -1,12 +1,18 @@
 <?php
-    if (!isset($_SERVER['PHP_AUTH_USER'])) {
-        header("WWW-Authenticate: Basic realm=\"Private Area\"");
-        header("HTTP/1.0 401 Unauthorized");
-        // only reached if authentication fails
-        print "Sorry - you need valid credentials granted access to the private area!\n";
-        exit;
-    } else {
-        // only reached if authentication succeeds
-        print "Welcome to the private area, {$_SERVER['PHP_AUTH_USER']} - you used {$_SERVER['PHP_AUTH_PW']} as your password.";
-    }
+
+$fields = array('gid' => 1, 'status' => 100, 'vid' => 1);
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, "http://dev.1800approved.com.au/api/v1/genius/updateHubSpot");
+curl_setopt($ch, CURLOPT_TIMEOUT, 30); //timeout after 30 seconds
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
+curl_setopt($ch, CURLOPT_USERPWD, "root:r0Ot_C0n643");
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $fields);
+$status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);   //get status code
+$result = curl_exec($ch);
+curl_close($ch);
+
+echo $result;
 ?>

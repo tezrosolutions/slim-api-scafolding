@@ -48,6 +48,7 @@ $app->group('/contactspace', function () use ($app) {
 
         //get call information from CS
         $callInfoResponse = $contactSpace->getSingleRecord($callID);
+
         if (count($callInfoResponse) == 2) {
             if ($callInfoResponse[0] == 200) {
                 $callInfo = simplexml_load_string($callInfoResponse[1]);
@@ -62,17 +63,50 @@ $app->group('/contactspace', function () use ($app) {
                         $fields['broker_email'] = $callInfo->records->record->Broker_email;
 
                     if (isset($callInfo->records->record->Lead_status))
-                        $fields['hs_lead_status'] = $callInfo->records->record->Lead_status;
+                        $fields['hs_lead_status'] = strtoupper($callInfo->records->record->Lead_status);
+                    
+                    //@TODO for testing
+                    /*$vid = 76669;
+                    $fields['hs_lead_status'] = "QUALIFIED";
+                    $fields['broker_email'] = "umair@tezrosolutions.com";*/
 
                     $hsUpdateResponse = $hubspot->contacts()->update_contact($vid, $fields);
+                    if (isset($hsUpdateResponse->status)) {
+                        if ($hsUpdateResponse->status == "error" && $hsUpdateResponse->message == "resource not found") {
+                            if (isset($callInfo->records->record->Phone)) {
+                                $phone = "0" . ltrim($callInfo->records->record->Phone, "61");
+                            } else if (isset($callInfo->records->record->Work_Phone)) {
+                                $phone = "0" . ltrim($callInfo->records->record->Work_Phone, "61");
+                            } else if (isset($callInfo->records->record->Mobile_Phone)) {
+                                $phone = "0" . ltrim($callInfo->records->record->Mobile_Phone, "61");
+                            } else if (isset($callInfo->records->record->Home_Phone)) {
+                                $phone = "0" . ltrim($callInfo->records->record->Home_Phone, "61");
+                            }
 
+                            $hsSearchResponse = $hubspot->contacts()->search_contacts(array("q" => $phone));
+                            if ($hsSearchResponse->total > 0) {
+                                $vid = $hsSearchResponse->contacts[0]->vid;
+                                $hsUpdateResponse = $hubspot->contacts()->update_contact($vid, $fields);
+                            } else {
+                                $phone = ltrim($phone, "0");
+                                 $hsSearchResponse = $hubspot->contacts()->search_contacts(array("q" => $phone));
+                                if ($hsSearchResponse->total > 0) {
+                                    $vid = $hsSearchResponse->contacts[0]->vid;
+                                    $hsUpdateResponse = $hubspot->contacts()->update_contact($vid, $fields);
+                                }
+                            }
+                        }
+                    }
 
                     if ($app->log->getEnabled()) {
-                        $app->log->debug('[' . date('H:i:s', time()) . '] HS Update Request Body: ID: '. $vid . ' BODY: ' . json_encode($fields));
+                        $app->log->debug('[' . date('H:i:s', time()) . '] HS Update Request Body: ID: ' . $vid . ' BODY: ' . json_encode($fields));
                         $app->log->debug('[' . date('H:i:s', time()) . '] HS Update Response Body: ' . json_encode($hsUpdateResponse));
                     }
                     
-                    echo $hsUpdateResponse->status;
+                    if(isset($hsUpdateResponse->status))
+                        echo $hsUpdateResponse->status;
+                    else 
+                        echo "success";
                 } else {
                     echo "error";
                 }
@@ -104,7 +138,7 @@ $app->group('/contactspace', function () use ($app) {
                     $key == "employment_type_" || $key == "credit_status" || $key == "postal_code" ||
                     $key == "home_sts" || $key == "employment_length" || $key == "current_residency_length" ||
                     $key == "marital_status" || $key == "number_of_children" || $key == "mobilephone" ||
-                    $key == "broker_email")
+                    $key == "broker_email" || $key == "business_no")
                 $fields[$key] = $property->value;
         }
 
@@ -120,7 +154,14 @@ $app->group('/contactspace', function () use ($app) {
             $fields['phone'] = ltrim($fields['phone'], '0');
             //@TODO right now its setup with Australia country code make it dynamic later as needed
             $fields['phone'] = "61" . $fields['phone'];
-            $contactSpaceXML .= "<Home_Phone>" . $fields['phone'] . "</Home_Phone>";
+            $contactSpaceXML .= "<Phone>" . $fields['phone'] . "</Phone>";
+        }
+
+        if (array_key_exists('business_no', $fields)) {
+            $fields['business_no'] = ltrim($fields['business_no'], '0');
+            //@TODO right now its setup with Australia country code make it dynamic later as needed
+            $fields['business_no'] = "61" . $fields['business_no'];
+            $contactSpaceXML .= "<Work_Phone>" . $fields['business_no'] . "</Work_Phone>";
         }
 
         if (array_key_exists('mobilephone', $fields)) {
@@ -342,7 +383,7 @@ $app->group('/emailleads', function() use ($app) {
  * */
 $app->group('/genius', function() use ($app) {
 
-     $app->post('/updateHubSpot', function() use ($app) {
+    $app->post('/updateHubSpot', function() use ($app) {
         $vid = $app->request->post("vid");
 
         $gid = $app->request->post("gid");
@@ -350,15 +391,14 @@ $app->group('/genius', function() use ($app) {
         $status = $app->request->post("status");
 
         echo "not ready";
-     });
+    });
     /*
      * Called from HubSpot to synchronize contact as a Genius loan application
      * Receives JSON object in request body
      */
     $app->post('/synchronize', function() use ($app) {
 
-        require_once('app/lib/genius.php');
-        $instanceGenius = new Custom\Libs\Genius($app);
+
 
         $entityBody = $app->request->getBody();
 
@@ -366,7 +406,96 @@ $app->group('/genius', function() use ($app) {
         $hubspotData = json_decode($entityBody);
 
         $fields = array();
-        $fields['ID'] = $hubspotData->vid;
+        $fields['vid'] = $hubspotData->vid;
+
+        //extracting contact information from HubSpot
+        foreach ($hubspotData->properties as $key => $property) {
+            if ($key == "lastname" || $key == "phone" || $key == "firstname" || $key == "hubspot_owner_id" ||
+                    $key == "loan_purpose" || $key == "approved_loan_amount" || $key == "yes_i_accept" ||
+                    $key == "employment_type_" || $key == "credit_status" || $key == "postal_code" ||
+                    $key == "home_sts" || $key == "employment_length" || $key == "current_residency_length" ||
+                    $key == "marital_status" || $key == "number_of_children")
+                $fields[$key] = $property->value;
+        }
+
+
+        /*         * ** Synchronizing deal to HubSpot *** */
+        if (!array_key_exists('hubspot_owner_id', $fields)) {
+            if ($app->log->getEnabled())
+                $app->log->debug('[' . date('H:i:s', time()) . '] Deal Sync Warning: HubSpot owner missing, setting to 5219627');
+
+            $fields['hubspot_owner_id'] = '5219627';
+        }
+
+        $dealJSON = '{
+            "associations": {
+                "associatedCompanyIds": [
+                    0
+                ],
+                "associatedVids": [
+                    ' . $fields['vid'] . '
+                ]
+            },
+            "portalId": 62515,
+            "properties": [
+                
+                {
+                    "value": "appointmentscheduled",
+                    "name": "dealstage"
+                },
+                {
+                    "value": "' . $fields['hubspot_owner_id'] . '",
+                    "name": "hubspot_owner_id"
+                },
+                {
+                    "value": "newbusiness",
+                    "name": "dealtype"
+                },
+                {
+                    "value": "new_enquiry",
+                    "name": "deal_status"
+                }';
+
+        if (array_key_exists('firstname', $fields))
+            $dealJSON .= ',{
+                    "value": "' . $fields['firstname'] . '\'s Deal",
+                    "name": "dealname"
+                	}';
+
+
+        if (array_key_exists('approved_loan_amount', $fields))
+            $dealJSON .= ',{
+                    "value": "' . $fields['approved_loan_amount'] . '",
+                    "name": "loan_amount"
+                	}';
+
+        if (array_key_exists('loan_purpose', $fields))
+            $dealJSON .= ',{
+                    "value": "' . $fields['loan_purpose'] . '",
+                    "name": "loan_purpose"
+                	}';
+        $dealJSON .= ']}';
+
+
+        require_once('app/lib/hubspotext.php');
+        $hubspotExt = new Custom\Libs\HubSpotExt();
+        $dealSyncResponseArr = $hubspotExt->insertDeal($dealJSON);
+        $deal = json_decode($dealSyncResponseArr[1]);
+
+
+        if ($app->log->getEnabled()) {
+            $app->log->debug('[' . date('H:i:s', time()) . '] Deal Sync Request: ' . $dealJSON);
+            $app->log->debug('[' . date('H:i:s', time()) . '] Deal Sync Response Body: ' . $dealSyncResponseArr[1]);
+            $app->log->debug('[' . date('H:i:s', time()) . '] Deal Sync Response: ' . $dealSyncResponseArr[0]);
+        }
+
+        require_once('app/lib/genius.php');
+        $instanceGenius = new Custom\Libs\Genius($app);
+
+
+
+        $fields = array();
+        $fields['ID'] = $deal->dealId;
 
         //extracting contact information from HubSpot
         foreach ($hubspotData->properties as $key => $property) {
@@ -374,9 +503,13 @@ $app->group('/genius', function() use ($app) {
                     $key == "approved_loan_amount" || $key == "zip" || $key == "accept_privacy" ||
                     $key == "accept_creditguide" || $key == "abn" || $key == "dob" ||
                     $key == "employment_type_" || $key == "broker_email" || $key == "home_sts" ||
-                    $key == "marital_status" || $key == "number_of_children" || $key == "employment_length")
+                    $key == "marital_status" || $key == "number_of_children" || $key == "employment_length" || $key == "email")
                 $fields[$key] = $property->value;
         }
+
+
+        //@TODO Remove JUST USE FOR TESTING
+        $fields['broker_email'] = "umair@tezrosolutions.com";
 
         $fields['leads_type'] = "QuickQuote";
         $fields['accessCode'] = "money3";
@@ -398,12 +531,16 @@ $app->group('/genius', function() use ($app) {
         } else {
             $fields['introducer'] = '74';
             $fields['salesperson'] = '1127'; //rod
+            $fields['abn'] = '11111111111';
         }
 
 
         $fields['coplArea'] = "<PhHomeAreaCode></PhHomeAreaCode>";
         $fields['coplPh'] = "<PhHome></PhHome>";
-        $fields['coplMob'] = "<Mobile>" . $fields['phone'] . "</Mobile>";
+        if (isset($fields['phone']))
+            $fields['coplMob'] = "<Mobile>" . $fields['phone'] . "</Mobile>";
+        else
+            $fields['coplMob'] = "<Mobile></Mobile>";
 
 
         if (empty($fields['dob'])) {
@@ -435,7 +572,7 @@ $app->group('/genius', function() use ($app) {
         if (!empty($fields['loan_purpose']))
             $fields['leads_finance_type'] = $instanceGenius->getCoplCodes('loan_types', $fields['loan_purpose'], 'loantype'); //required
         else
-            $fields['leads_finance_type'] = "";
+            $fields['leads_finance_type'] = "personal";
 
 
         if (!empty($fields['employment_type_']))
@@ -449,6 +586,8 @@ $app->group('/genius', function() use ($app) {
             $fields['property'] = "";
 
 
-        $instanceGenius->post($fields);
+
+
+        echo $instanceGenius->post($fields)[0];
     });
 });
