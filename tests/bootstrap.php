@@ -22,10 +22,13 @@ class LocalWebTestCase extends WebTestCase {
 
         $customConfig['hubspot'] = array();
         $customConfig['hubspot']['config'] = $hubspotConfig;
+        $customConfig['hubspot']['dealStatuses'] = $geniusDealStatuses;
+
 
         $customConfig['genius'] = array();
         $customConfig['genius']['coplCodes'] = $coplCodes;
         $customConfig['genius']['config'] = $geniusConfig;
+
 
         $app = new \Slim\Slim(array(
             'version' => '0.0.0',

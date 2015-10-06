@@ -60,18 +60,29 @@ $app->group('/contactspace', function () use ($app) {
 
                     $fields = array();
                     if (isset($callInfo->records->record->Broker_email)) {
-                        $fields['broker_email'] = $callInfo->records->record->Broker_email;
-                        $fields['hs_lead_status'] = "QUALIFIED";
-                        
+
+                        if (count($callInfo->records->record->Broker_email) > 0) {
+
+                            $fields['broker_email'] = (string) $callInfo->records->record->Broker_email[0];
+                            $fields['hs_lead_status'] = "QUALIFIED";
+                        }
                     }
 
-                    if (isset($callInfo->records->record->Lead_status))
-                        $fields['hs_lead_status'] = strtoupper($callInfo->records->record->Lead_status);
-                    
+
+                    if (isset($callInfo->records->record->Lead_status)) {
+                        //$fields['hs_lead_status'] = strtoupper($callInfo->records->record->Lead_status);
+
+                        if (count($callInfo->records->record->Lead_status) > 0) {
+
+                            $fields['hs_lead_status'] = (string) strtoupper($callInfo->records->record->Lead_status[0]);
+                        }
+                    }
                     //@TODO for testing
-                    /*$vid = 76669;
-                    $fields['hs_lead_status'] = "QUALIFIED";
-                    $fields['broker_email'] = "umair@tezrosolutions.com";*/
+                    /* $vid = 76669;
+                      $fields['hs_lead_status'] = "QUALIFIED";
+                      $fields['broker_email'] = "umair@tezrosolutions.com"; */
+
+
 
                     $hsUpdateResponse = $hubspot->contacts()->update_contact($vid, $fields);
                     if (isset($hsUpdateResponse->status)) {
@@ -92,7 +103,7 @@ $app->group('/contactspace', function () use ($app) {
                                 $hsUpdateResponse = $hubspot->contacts()->update_contact($vid, $fields);
                             } else {
                                 $phone = ltrim($phone, "0");
-                                 $hsSearchResponse = $hubspot->contacts()->search_contacts(array("q" => $phone));
+                                $hsSearchResponse = $hubspot->contacts()->search_contacts(array("q" => $phone));
                                 if ($hsSearchResponse->total > 0) {
                                     $vid = $hsSearchResponse->contacts[0]->vid;
                                     $hsUpdateResponse = $hubspot->contacts()->update_contact($vid, $fields);
@@ -105,10 +116,10 @@ $app->group('/contactspace', function () use ($app) {
                         $app->log->debug('[' . date('H:i:s', time()) . '] HS Update Request Body: ID: ' . $vid . ' BODY: ' . json_encode($fields));
                         $app->log->debug('[' . date('H:i:s', time()) . '] HS Update Response Body: ' . json_encode($hsUpdateResponse));
                     }
-                    
-                    if(isset($hsUpdateResponse->status))
+
+                    if (isset($hsUpdateResponse->status))
                         echo $hsUpdateResponse->status;
-                    else 
+                    else
                         echo "success";
                 } else {
                     echo "error";
@@ -385,16 +396,51 @@ $app->group('/emailleads', function() use ($app) {
  * Genius group
  * */
 $app->group('/genius', function() use ($app) {
+    /**
+     * Prints the deal properties
+     */
+    $app->get('/deal/:id', function ($id) use ($app) {
+        require_once('app/lib/hubspotext.php');
+        $hubspotExt = new Custom\Libs\HubSpotExt();
+        print_r( json_encode(json_decode($hubspotExt->getDeal($id)[1])->properties));
+    });
 
+    /**
+     * Get called from Genius when application status is changed
+     */
     $app->post('/updateHubSpot', function() use ($app) {
         $vid = $app->request->post("vid");
 
         $gid = $app->request->post("gid");
 
-        $status = $app->request->post("status");
+        $customConfig = $app->config('custom');
+        $status = $customConfig['hubspot']['dealStatuses'][$app->request->post("status")];
 
-        echo "not ready";
+
+        require_once('app/lib/hubspotext.php');
+        $hubspotExt = new Custom\Libs\HubSpotExt();
+        $fields = '
+            {
+            "properties": [
+                {
+                    "name": "deal_status",
+                    "value": "' . $status . '"
+                }
+            ]
+        }';
+
+        $dealGetResponseArr = $hubspotExt->updateDeal($vid, $fields);
+
+        if ($app->log->getEnabled()) {
+            $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Request Body: ' . $fields);
+            $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Response Body: ' . $dealGetResponseArr[1]);
+            $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Response Status: ' . $dealGetResponseArr[0]);
+        }
+
+
+        echo $dealGetResponseArr[0];
     });
+
     /*
      * Called from HubSpot to synchronize contact as a Genius loan application
      * Receives JSON object in request body
@@ -506,7 +552,10 @@ $app->group('/genius', function() use ($app) {
                     $key == "approved_loan_amount" || $key == "zip" || $key == "accept_privacy" ||
                     $key == "accept_creditguide" || $key == "abn" || $key == "dob" ||
                     $key == "employment_type_" || $key == "broker_email" || $key == "home_sts" ||
-                    $key == "marital_status" || $key == "number_of_children" || $key == "employment_length" || $key == "email")
+                    $key == "marital_status" || $key == "number_of_children" || $key == "employment_length" ||
+                    $key == "email" || $key == "company" || $key == "broker_email" || $key == "gender" ||
+                    $key == "address" || $key == "city" || $key == "state" || $key == "current_residency_length" ||
+                    $key == "utm" || $key == "totalincome" || $key == "feedback_comments" || $key == "hs_lead_status")
                 $fields[$key] = $property->value;
         }
 
@@ -518,9 +567,8 @@ $app->group('/genius', function() use ($app) {
         $fields['accessCode'] = "money3";
         $fields['accessPass'] = "flying123";
 
-
         //@TODO inquire about these
-        $fields['leads_businesstype'] = $fields['leads_bname'] = $fields['leads_assignee'] = $fields['leads_sex'] = $fields['unitno'] = $fields['streetno'] = $fields['streetname'] = $fields['streettype'] = $fields['leads_city'] = $fields['leads_state'] = $fields['residyear'] = $fields['residmonth'] = $fields['leads_lic'] = $fields['emplengthmonth'] = $fields['mortgagePayments'] = $fields['rentPayments'] = $fields['utm_source'] = $fields['utm_medium'] = $fields['utm_cname'] = $fields['utm_cterm'] = $fields['utm_ccontent'] = $fields['leads_income1'] = $fields['leads_income2'] = $fields['leads_comment'] = $fields['lead_status'] = "";
+        $fields['leads_businesstype'] = $fields['leads_assignee'] = $fields['unitno'] = $fields['streetno'] = $fields['streettype'] = $fields['residmonth'] = $fields['leads_lic'] = $fields['emplengthmonth'] = $fields['mortgagePayments'] = $fields['rentPayments'] = $fields['utm_medium'] = $fields['utm_cname'] = $fields['utm_cterm'] = $fields['utm_ccontent'] = $fields['leads_income2'] = "";
 
         if (!empty($fields['abn'])) {
             $fields['introducer'] = '121';

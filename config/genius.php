@@ -273,6 +273,7 @@ $coplCodes = array(
     "residential_statuses" => $jsonResidential_status
 );
 
+
 $geniusConfig = array(
     "API_ENDPOINT" => "http://122.201.115.107/broker/webservice/application/new",
 );

@@ -21,6 +21,8 @@ $customConfig = array();
 
 $customConfig['hubspot'] = array();
 $customConfig['hubspot']['config'] = $hubspotConfig;
+$customConfig['hubspot']['dealStatuses'] = $geniusDealStatuses;
+
 
 $customConfig['genius'] = array();
 $customConfig['genius']['coplCodes'] = $coplCodes;
