@@ -59,8 +59,11 @@ $app->group('/contactspace', function () use ($app) {
                     $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
 
                     $fields = array();
-                    if (isset($callInfo->records->record->Broker_email))
+                    if (isset($callInfo->records->record->Broker_email)) {
                         $fields['broker_email'] = $callInfo->records->record->Broker_email;
+                        $fields['hs_lead_status'] = "QUALIFIED";
+                        
+                    }
 
                     if (isset($callInfo->records->record->Lead_status))
                         $fields['hs_lead_status'] = strtoupper($callInfo->records->record->Lead_status);
