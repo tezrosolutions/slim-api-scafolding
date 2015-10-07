@@ -444,6 +444,8 @@ $app->group('/genius', function() use ($app) {
            if ($app->log->getEnabled()) {
                 $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Error: Invalid status code');
             } 
+            
+            echo 400;
         }
     });
 
