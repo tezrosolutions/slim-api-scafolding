@@ -402,7 +402,7 @@ $app->group('/genius', function() use ($app) {
     $app->get('/deal/:id', function ($id) use ($app) {
         require_once('app/lib/hubspotext.php');
         $hubspotExt = new Custom\Libs\HubSpotExt();
-        print_r( json_encode(json_decode($hubspotExt->getDeal($id)[1])->properties));
+        print_r(json_encode(json_decode($hubspotExt->getDeal($id)[1])->properties));
     });
 
     /**
@@ -414,12 +414,13 @@ $app->group('/genius', function() use ($app) {
         $gid = $app->request->post("gid");
 
         $customConfig = $app->config('custom');
-        $status = $customConfig['hubspot']['dealStatuses'][$app->request->post("status")];
+        if (array_key_exists($app->request->post("status"), $customConfig['hubspot']['dealStatuses'])) {
+            $status = $customConfig['hubspot']['dealStatuses'][$app->request->post("status")];
 
 
-        require_once('app/lib/hubspotext.php');
-        $hubspotExt = new Custom\Libs\HubSpotExt();
-        $fields = '
+            require_once('app/lib/hubspotext.php');
+            $hubspotExt = new Custom\Libs\HubSpotExt();
+            $fields = '
             {
             "properties": [
                 {
@@ -429,16 +430,21 @@ $app->group('/genius', function() use ($app) {
             ]
         }';
 
-        $dealGetResponseArr = $hubspotExt->updateDeal($vid, $fields);
+            $dealGetResponseArr = $hubspotExt->updateDeal($vid, $fields);
 
-        if ($app->log->getEnabled()) {
-            $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Request Body: ' . $fields);
-            $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Response Body: ' . $dealGetResponseArr[1]);
-            $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Response Status: ' . $dealGetResponseArr[0]);
+            if ($app->log->getEnabled()) {
+                $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Request Body: ' . $fields);
+                $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Response Body: ' . $dealGetResponseArr[1]);
+                $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Response Status: ' . $dealGetResponseArr[0]);
+            }
+
+
+            echo $dealGetResponseArr[0];
+        } else {
+           if ($app->log->getEnabled()) {
+                $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Error: Invalid status code');
+            } 
         }
-
-
-        echo $dealGetResponseArr[0];
     });
 
     /*
@@ -468,7 +474,7 @@ $app->group('/genius', function() use ($app) {
         }
 
 
-        /*         * ** Synchronizing deal to HubSpot *** */
+        /*         * ** Synchronizing deal to Genius *** */
         if (!array_key_exists('hubspot_owner_id', $fields)) {
             if ($app->log->getEnabled())
                 $app->log->debug('[' . date('H:i:s', time()) . '] Deal Sync Warning: HubSpot owner missing, setting to 5219627');
@@ -538,6 +544,9 @@ $app->group('/genius', function() use ($app) {
             $app->log->debug('[' . date('H:i:s', time()) . '] Deal Sync Response: ' . $dealSyncResponseArr[0]);
         }
 
+        /**
+         * Synchronizing to Genius as new loan application
+         */
         require_once('app/lib/genius.php');
         $instanceGenius = new Custom\Libs\Genius($app);
 
@@ -561,7 +570,7 @@ $app->group('/genius', function() use ($app) {
 
 
         //@TODO Remove JUST USE FOR TESTING
-        $fields['broker_email'] = "umair@tezrosolutions.com";
+        //$fields['broker_email'] = "umair@tezrosolutions.com";
 
         $fields['leads_type'] = "QuickQuote";
         $fields['accessCode'] = "money3";
