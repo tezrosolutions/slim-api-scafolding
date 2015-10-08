@@ -54,7 +54,7 @@ class Genius {
       <LoanType>" . (isset($fields['leads_finance_type']) ? $fields['leads_finance_type'] : "") . "</LoanType>
       <FirstName>" . (isset($fields['firstname']) ? $fields['firstname'] : "") . "</FirstName>
       <Surname>" . (isset($fields['lastname']) ? $fields['lastname'] : "") . "</Surname>
-      <Gender>" . (isset($fields['gender']) ? $fields['gender'] : "") . "</Gender>
+      <Gender>" . (isset($fields['gender']) ? strtolower($fields['gender']) : "") . "</Gender>
       " . $fields['coplArea'] . "
       " . $fields['coplPh'] . "
       " . $fields['coplMob'] . "
