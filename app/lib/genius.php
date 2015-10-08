@@ -63,7 +63,7 @@ class Genius {
       <StreetNo>" . (isset($fields['streetno']) ? $fields['streetno'] : "") . "</StreetNo>
       <Street>" . (isset($fields['address']) ? $fields['address'] : "") . "</Street>
       <StreetType>" . (isset($fields['streettype']) ? $fields['streettype'] : "") . "</StreetType>
-      <Suburb>" . (isset($fields['city']) ? $fields['city'] : "") . "</Suburb>
+      <Suburb>" . (isset($fields['suburb']) ? $fields['suburb'] : "") . "</Suburb>
       <State>" . (isset($fields['state']) ? $fields['state'] : "") . "</State>
       <PostCode>" . (isset($fields['zip']) ? $fields['zip'] : "") . "</PostCode>
       <TimeAtAddressYears>" . (isset($fields['current_residency_length']) ? $fields['current_residency_length'] : "") . "</TimeAtAddressYears>

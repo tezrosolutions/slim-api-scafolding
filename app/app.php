@@ -70,7 +70,6 @@ $app->group('/contactspace', function () use ($app) {
 
 
                     if (isset($callInfo->records->record->Lead_status)) {
-                        //$fields['hs_lead_status'] = strtoupper($callInfo->records->record->Lead_status);
 
                         if (count($callInfo->records->record->Lead_status) > 0) {
 
@@ -441,10 +440,10 @@ $app->group('/genius', function() use ($app) {
 
             echo $dealGetResponseArr[0];
         } else {
-           if ($app->log->getEnabled()) {
+            if ($app->log->getEnabled()) {
                 $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Error: Invalid status code');
-            } 
-            
+            }
+
             echo 400;
         }
     });
@@ -566,7 +565,8 @@ $app->group('/genius', function() use ($app) {
                     $key == "marital_status" || $key == "number_of_children" || $key == "employment_length" ||
                     $key == "email" || $key == "company" || $key == "broker_email" || $key == "gender" ||
                     $key == "address" || $key == "city" || $key == "state" || $key == "current_residency_length" ||
-                    $key == "utm" || $key == "totalincome" || $key == "feedback_comments" || $key == "hs_lead_status")
+                    $key == "utm" || $key == "totalincome" || $key == "feedback_comments" || $key == "hs_lead_status" ||
+                    $key == "mobilephone" || $key == "private_phone_number" || $key == "suburb")
                 $fields[$key] = $property->value;
         }
 
@@ -598,9 +598,14 @@ $app->group('/genius', function() use ($app) {
 
 
         $fields['coplArea'] = "<PhHomeAreaCode></PhHomeAreaCode>";
-        $fields['coplPh'] = "<PhHome></PhHome>";
-        if (isset($fields['phone']))
-            $fields['coplMob'] = "<Mobile>" . $fields['phone'] . "</Mobile>";
+
+        if (isset($fields['private_phone_number']))
+            $fields['coplPh'] = "<PhHome>" . $fields['private_phone_number'] . "</PhHome>";
+        else
+            $fields['coplPh'] = "<PhHome></PhHome>";
+
+        if (isset($fields['mobilephone']))
+            $fields['coplMob'] = "<Mobile>" . $fields['mobilephone'] . "</Mobile>";
         else
             $fields['coplMob'] = "<Mobile></Mobile>";
 
@@ -612,10 +617,21 @@ $app->group('/genius', function() use ($app) {
             $fields['fullBday'] = $birthyear . "-" . $birthmonth . "-" . $birthday;
         } else {
             $dob_parts = explode("/", $fields['dob']);
-            $birthyear = $dob_parts[2];
-            $birthmonth = $dob_parts[0];
-            $birthday = $dob_parts[1];
-            $fields['fullBday'] = $birthyear . "-" . $birthmonth . "-" . $birthday;
+            if (count($dob_parts) == 3) {
+                $birthyear = $dob_parts[2];
+                $birthmonth = $dob_parts[1];
+                $birthday = $dob_parts[0];
+                $fields['fullBday'] = $birthyear . "-" . $birthmonth . "-" . $birthday;
+            } else {
+                $timestamp = $fields['dob'];
+                $dob_parts = explode("/", gmdate("d/m/Y", $timestamp));
+                if (count($dob_parts) == 3) {
+                    $birthyear = $dob_parts[2];
+                    $birthmonth = $dob_parts[1];
+                    $birthday = $dob_parts[0];
+                    $fields['fullBday'] = $birthyear . "-" . $birthmonth . "-" . $birthday;
+                }
+            }
         }
 
 
