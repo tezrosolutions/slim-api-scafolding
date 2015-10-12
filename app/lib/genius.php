@@ -74,7 +74,7 @@ class Genius {
       <NoOfDependencies>" . (isset($fields['number_of_children']) ? $fields['number_of_children'] : "") . "</NoOfDependencies>
       <DriversLicenceNo>" . (isset($fields['leads_lic']) ? $fields['leads_lic'] : "") . "</DriversLicenceNo>
       <RetailPrice>" . (isset($fields['approved_loan_amount']) ? $fields['approved_loan_amount'] : "") . "</RetailPrice>
-      <EmploymentType>" . (isset($fields['employment_type_']) ? $fields['employment_type_'] : "") . "</EmploymentType>
+      <EmploymentType>" . (isset($fields['employment']) ? $fields['employment'] : "") . "</EmploymentType>
       <TimeEmployedYears>" . (isset($fields['employment_length']) ? $fields['employment_length'] : "") . "</TimeEmployedYears>
       <TimeEmployedMonths>" . (isset($fields['emplengthmonth']) ? $fields['emplengthmonth'] : "") . "</TimeEmployedMonths>
       <Mortgage>" . (isset($fields['mortgagePayments']) ? $fields['mortgagePayments'] : "") . "</Mortgage>

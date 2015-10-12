@@ -401,7 +401,8 @@ $app->group('/genius', function() use ($app) {
     $app->get('/deal/:id', function ($id) use ($app) {
         require_once('app/lib/hubspotext.php');
         $hubspotExt = new Custom\Libs\HubSpotExt();
-        print_r(json_encode(json_decode($hubspotExt->getDeal($id)[1])->properties));
+        //print_r(json_encode(json_decode($hubspotExt->getDeal($id)[1])->properties));
+        echo ($hubspotExt->getDeal($id)[1]);
     });
 
     /**
