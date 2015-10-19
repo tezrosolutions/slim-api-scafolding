@@ -167,14 +167,16 @@ $app->group('/contactspace', function () use ($app) {
             $fields['phone'] = ltrim($fields['phone'], '0');
             //@TODO right now its setup with Australia country code make it dynamic later as needed
             $fields['phone'] = "61" . $fields['phone'];
-            $contactSpaceXML .= "<Phone>" . $fields['phone'] . "</Phone>";
+            //$contactSpaceXML .= "<Phone>" . $fields['phone'] . "</Phone>";
+            $contactSpaceXML .= "<Mobile_Phone>" . $fields['phone'] . "</Mobile_Phone>";
         }
 
         if (array_key_exists('business_no', $fields)) {
             $fields['business_no'] = ltrim($fields['business_no'], '0');
             //@TODO right now its setup with Australia country code make it dynamic later as needed
             $fields['business_no'] = "61" . $fields['business_no'];
-            $contactSpaceXML .= "<Work_Phone>" . $fields['business_no'] . "</Work_Phone>";
+            //$contactSpaceXML .= "<Work_Phone>" . $fields['business_no'] . "</Work_Phone>";
+            $contactSpaceXML .= "<Mobile_Phone>" . $fields['business_no'] . "</Mobile_Phone>";
         }
 
         if (array_key_exists('mobilephone', $fields)) {
