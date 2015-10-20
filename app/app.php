@@ -672,3 +672,23 @@ $app->group('/genius', function() use ($app) {
         echo $instanceGenius->post($fields)[0];
     });
 });
+
+
+/**
+ * Finder group
+ * */
+$app->group('/finder', function () use ($app) {
+
+    $app->post("/synchronize", function() use ($app) {
+        $leadID = $app->request->post("lead_id");
+        $datePosted = $app->request->post("date_posted");
+        $firstName = $app->request->post("fname");
+        $lastName = $app->request->post("lname");
+        $phone = $app->request->post("phone");
+        $email = $app->request->post("email");
+        $income = $app->request->post("income");
+        $australianCitizen = $app->request->post("australian_citizen");
+        $creditDefaults = $app->request->post("credit_defaults");
+    });
+});
+
