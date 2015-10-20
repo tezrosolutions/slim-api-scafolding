@@ -44,30 +44,35 @@ class EmailLeads {
 
                 $message = imap_fetchbody($inbox, $email_number, 1);
 
+
                 $messageUid = $overview[0]->uid;
                 $status = imap_setflag_full($inbox, $email_number, "\\Seen \\Flagged", ST_UID);
                 $structure = imap_fetchstructure($inbox, $email_number, ST_UID);
 
-                $emailDate = date("Y-m-d H.i.s", strtotime($emailDate));
 
                 $output .= $message;
 
 
-                $output = preg_replace("/[\n]/", ",", $output);
-                $contentA = rtrim($output, ',');
+                $output = preg_replace("/[\n]/", ";", $output);
+                $contentA = rtrim($output, ';');
                 $contentB = trim($contentA);
 
 
-                $pairs = explode(',', $output);
+                $pairs = explode(';', $output);
                 $a = array();
-                foreach ($pairs as $pair) {
-                    list($k, $v) = explode(':', $pair);
-                    $v = trim($v);
-                    if (empty($v)) {
-                        $v = 'none';
+
+                for ($i = 0; $i < count($pairs); $i++) {
+                    if (strlen($pairs[$i]) > 1) {
+                        list($k, $v) = explode(':', $pairs[$i]);
+                        $v = trim($v);
+                        if (empty($v)) {
+                            $v = 'none';
+                        }
+                        $a[$k] = $v;
                     }
-                    $a[$k] = $v;
                 }
+
+
 
                 $json_results = json_encode($a);
                 $json_obj = json_decode($json_results, true);
@@ -76,7 +81,7 @@ class EmailLeads {
 
                     $value = str_replace("<br/>", "", $value);
 
-                    if ($key == 'FirstName') {
+                    if ($key == 'First Name') {
 
                         $fullname = @htmlentities(trim($value), ENT_QUOTES);
                         $nameparts = @htmlentities(explode(" ", $fullname), ENT_QUOTES);
@@ -89,7 +94,7 @@ class EmailLeads {
                         }
                     }
 
-                    if ($key == 'LastName') {
+                    if ($key == 'Last Name') {
                         $lastnameA = @htmlentities($value, ENT_QUOTES);
                     }
                     if ($key == 'Email') {
@@ -149,8 +154,9 @@ class EmailLeads {
                     $lastname = '';
                 }
 
-                $leads_comment = "Pref Contact Method: $pref_contact_method - Pref Contact Time: $pref_contact_time - Vehicle: $vehicle";
-
+                if (isset($pref_contact_method) && isset($pref_contact_time) && isset($pref_contact_time) && isset($vehicle)) {
+                    $leads_comment = "Pref Contact Method: $pref_contact_method - Pref Contact Time: $pref_contact_time - Vehicle: $vehicle";
+                }
                 /*                 * *** FIXED VARS **** */
 
                 $leads_active = '1';
@@ -166,29 +172,88 @@ class EmailLeads {
 
                 if (!empty($json_obj)) {//Check if there is an email
                     //Process the information received from email for sending it into hubspot
-                    $forms_fields = array(
-                        "firstname" => $firstname,
-                        "lastname" => $lastname,
-                        "email" => $leads_email,
-                        "business_no" => $leads_phone_w,
-                        "mobilephone" => $leads_phone_m,
-                        "phone" => $leads_phone,
-                        "loan_purpose" => $leads_finance_type,
-                        "zip" => $leads_pcode,
-                        "approved_loan_amount" => $leads_amount,
-                        "interest_rate" => $rate,
-                        "term_length" => $leads_term,
-                        "employment_type_" => $leads_employment_type,
-                        "deposit_trade_amount" => $leads_balloon,
-                        "ballon_residual" => $leads_balloon2,
-                        "accept_creditguide" => $accept_creditquote,
-                        "accept_privacy" => $leads_privacy,
-                        "hs_context" => $hs_context_json
-                    );
+                    $forms_fields = array();
+
+                    if (isset($firstname)) {
+                        $forms_fields["firstname"] = $firstname;
+                    }
+
+                    if (isset($lastname)) {
+                        $forms_fields["lastname"] = $lastname;
+                    }
+
+
+                    if (isset($leads_email)) {
+                        $forms_fields["email"] = $leads_email;
+                    }
+
+                    if (isset($leads_phone_w)) {
+                        $forms_fields["business_no"] = $leads_phone_w;
+                    }
+
+                    if (isset($leads_phone_m)) {
+                        $forms_fields["mobilephone"] = $leads_phone_m;
+                    }
+
+                    if (isset($leads_phone)) {
+                        $forms_fields["phone"] = $leads_phone;
+                    }
+
+
+
+                    if (isset($leads_finance_type)) {
+                        $forms_fields["loan_purpose"] = $leads_finance_type;
+                    }
+
+
+                    if (isset($leads_pcode)) {
+                        $forms_fields["zip"] = $leads_pcode;
+                    }
+
+                    if (isset($leads_amount)) {
+                        $forms_fields["approved_loan_amount"] = $leads_amount;
+                    }
+
+
+                    if (isset($rate)) {
+                        $forms_fields["interest_rate"] = $rate;
+                    }
+
+
+                    if (isset($leads_term)) {
+                        $forms_fields["term_length"] = $leads_term;
+                    }
+
+                    if (isset($leads_employment_type)) {
+                        $forms_fields["employment_type_"] = $leads_employment_type;
+                    }
+
+                    if (isset($leads_balloon)) {
+                        $forms_fields["deposit_trade_amount"] = $leads_balloon;
+                    }
+
+                    if (isset($leads_balloon2)) {
+                        $forms_fields["ballon_residual"] = $leads_balloon2;
+                    }
+
+                    if (isset($accept_creditquote)) {
+                        $forms_fields["accept_creditguide"] = $accept_creditquote;
+                    }
+
+                    if (isset($leads_privacy)) {
+                        $forms_fields["accept_privacy"] = $leads_privacy;
+                    }
+
+                    if (isset($hs_context_json)) {
+                        $forms_fields["hs_context"] = $hs_context_json;
+                    }
+
+
 
                     //Portid and FormGuid
                     $formGuid = '48a1c82e-00ff-4e34-be68-7718ad0389ee';
                     $appConfig = $app->config('custom');
+                    
 
                     $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
                     print $hubspot->forms()->submit($appConfig['hubspot']['config']['HUBSPOT_PORTAL_ID'], $formGuid, $form_fields);
@@ -360,28 +425,92 @@ class EmailLeads {
 
                 if (!empty($json_obj)) {//Check if there is an email
                     //Process the information received from email for sending it into hubspot
-                    $forms_fields = array(
-                        "firstname" => $firstname,
-                        "lastname" => $lastname,
-                        "email" => $leads_email,
-                        "business_no" => $leads_phone_w,
-                        "mobilephone" => $leads_phone_m,
-                        "phone" => $leads_phone,
-                        "address" => $leads_address,
-                        "city" => $leads_city,
-                        "fax" => $leads_fax_num,
-                        "loan_purpose" => $leads_finance_type,
-                        "zip" => $leads_pcode,
-                        "approved_loan_amount" => $leads_amount,
-                        "interest_rate" => $rate,
-                        "term_length" => $leads_term,
-                        "employment_type_" => $leads_employment_type,
-                        "deposit_trade_amount" => $leads_balloon,
-                        "ballon_residual" => $leads_balloon2,
-                        "accept_creditguide" => $accept_creditquote,
-                        "accept_privacy" => $leads_privacy,
-                        "hs_context" => $hs_context_json);
+                    $forms_fields = array();
 
+                    if (isset($firstname)) {
+                        $forms_fields["firstname"] = $firstname;
+                    }
+
+                    if (isset($lastname)) {
+                        $forms_fields["lastname"] = $lastname;
+                    }
+
+
+                    if (isset($leads_email)) {
+                        $forms_fields["email"] = $leads_email;
+                    }
+
+                    if (isset($leads_phone_w)) {
+                        $forms_fields["business_no"] = $leads_phone_w;
+                    }
+
+                    if (isset($leads_phone_m)) {
+                        $forms_fields["mobilephone"] = $leads_phone_m;
+                    }
+
+                    if (isset($leads_phone)) {
+                        $forms_fields["phone"] = $leads_phone;
+                    }
+
+                    if (isset($leads_address)) {
+                        $forms_fields["address"] = $leads_address;
+                    }
+
+                    if (isset($leads_city)) {
+                        $forms_fields["city"] = $leads_city;
+                    }
+
+                    if (isset($leads_fax_num)) {
+                        $forms_fields["fax"] = $leads_fax_num;
+                    }
+
+
+                    if (isset($leads_finance_type)) {
+                        $forms_fields["loan_purpose"] = $leads_finance_type;
+                    }
+
+
+                    if (isset($leads_pcode)) {
+                        $forms_fields["zip"] = $leads_pcode;
+                    }
+
+                    if (isset($leads_amount)) {
+                        $forms_fields["approved_loan_amount"] = $leads_amount;
+                    }
+
+
+                    if (isset($rate)) {
+                        $forms_fields["interest_rate"] = $rate;
+                    }
+
+
+                    if (isset($leads_term)) {
+                        $forms_fields["term_length"] = $leads_term;
+                    }
+
+                    if (isset($leads_employment_type)) {
+                        $forms_fields["employment_type_"] = $leads_employment_type;
+                    }
+
+                    if (isset($leads_balloon)) {
+                        $forms_fields["deposit_trade_amount"] = $leads_balloon;
+                    }
+
+                    if (isset($leads_balloon2)) {
+                        $forms_fields["ballon_residual"] = $leads_balloon2;
+                    }
+
+                    if (isset($accept_creditquote)) {
+                        $forms_fields["accept_creditguide"] = $accept_creditquote;
+                    }
+
+                    if (isset($leads_privacy)) {
+                        $forms_fields["accept_privacy"] = $leads_privacy;
+                    }
+
+                    if (isset($hs_context_json)) {
+                        $forms_fields["hs_context"] = $hs_context_json;
+                    }
 
 
                     //Portid and FormGuid
