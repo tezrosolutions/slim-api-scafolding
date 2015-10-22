@@ -368,7 +368,7 @@ $app->group('/emailleads', function() use ($app) {
     $app->post('/synchronize', function() use ($app) {
 
         require_once('app/lib/emailleads.php');
-        $_instanceEmailLeads = new Custom\Libs\EmailLeads();
+        $_instanceEmailLeads = new EmailLeads();
 
         $type = $app->request->post("type");
 
@@ -614,10 +614,7 @@ $app->group('/genius', function() use ($app) {
 
 
         if (empty($fields['dob'])) {
-            $birthyear = '0000';
-            $birthmonth = '00';
-            $birthday = '00';
-            $fields['fullBday'] = $birthyear . "-" . $birthmonth . "-" . $birthday;
+           $fields['fullBday'] = "";
         } else {
             $dob_parts = explode("/", $fields['dob']);
             if (count($dob_parts) == 3) {
@@ -626,7 +623,7 @@ $app->group('/genius', function() use ($app) {
                 $birthday = $dob_parts[0];
                 $fields['fullBday'] = $birthyear . "-" . $birthmonth . "-" . $birthday;
             } else {
-                $timestamp = $fields['dob'];
+                $timestamp = $fields['dob']/1000;
                 $dob_parts = explode("/", gmdate("d/m/Y", $timestamp));
                 if (count($dob_parts) == 3) {
                     $birthyear = $dob_parts[2];

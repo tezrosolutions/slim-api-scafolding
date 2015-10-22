@@ -4,7 +4,8 @@
  * Created by Muhammad Umair on 9/22/2015 as HubSpot helper
  * */
 
-namespace Custom\Libs;
+
+use Fungku\HubSpot;
 
 class EmailLeads {
 
@@ -244,11 +245,7 @@ class EmailLeads {
                         $forms_fields["accept_privacy"] = $leads_privacy;
                     }
 
-                    if (isset($hs_context_json)) {
-                        $forms_fields["hs_context"] = $hs_context_json;
-                    }
-
-
+                    
 
                     //Portid and FormGuid
                     $formGuid = '48a1c82e-00ff-4e34-be68-7718ad0389ee';
@@ -256,7 +253,7 @@ class EmailLeads {
                     
 
                     $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
-                    print $hubspot->forms()->submit($appConfig['hubspot']['config']['HUBSPOT_PORTAL_ID'], $formGuid, $form_fields);
+                    print $hubspot->forms()->submit_form($appConfig['hubspot']['config']['HUBSPOT_PORTAL_ID'], $formGuid, $forms_fields, array());
                 }
                 /*                 * *** DELETE EMAILS **** */
 
@@ -437,7 +434,8 @@ class EmailLeads {
 
 
                     if (isset($leads_email)) {
-                        $forms_fields["email"] = $leads_email;
+                        //$forms_fields["email"] = $leads_email;
+                        $forms_fields["email"] = "testcase_001@tezrosolutions.com";
                     }
 
                     if (isset($leads_phone_w)) {
@@ -508,17 +506,13 @@ class EmailLeads {
                         $forms_fields["accept_privacy"] = $leads_privacy;
                     }
 
-                    if (isset($hs_context_json)) {
-                        $forms_fields["hs_context"] = $hs_context_json;
-                    }
-
-
+                    
                     //Portid and FormGuid
                     $formGuid = '7eae7d07-097e-4be1-a733-e65c5f9d72ef';
                     $appConfig = $app->config('custom');
 
                     $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
-                    print $hubspot->forms()->submit($appConfig['hubspot']['config']['HUBSPOT_PORTAL_ID'], $formGuid, $form_fields);
+                    print $hubspot->forms()->submit($appConfig['hubspot']['config']['HUBSPOT_PORTAL_ID'], $formGuid, $form_fields, array());
                 }
                 /*                 * *** DELETE EMAILS **** */
 
