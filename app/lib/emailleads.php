@@ -3,8 +3,6 @@
 /**
  * Created by Muhammad Umair on 9/22/2015 as HubSpot helper
  * */
-
-
 use Fungku\HubSpot;
 
 class EmailLeads {
@@ -41,6 +39,7 @@ class EmailLeads {
             foreach ($emails as $email_number) {
 
                 /* get information specific to this email */
+               
                 $overview = imap_fetch_overview($inbox, $email_number, 0);
 
                 $message = imap_fetchbody($inbox, $email_number, 1);
@@ -83,20 +82,11 @@ class EmailLeads {
                     $value = str_replace("<br/>", "", $value);
 
                     if ($key == 'First Name') {
-
-                        $fullname = @htmlentities(trim($value), ENT_QUOTES);
-                        $nameparts = @htmlentities(explode(" ", $fullname), ENT_QUOTES);
-                        $lastname = @htmlentities(array_pop($nameparts), ENT_QUOTES);
-                        $firstname = @htmlentities(implode(" ", $nameparts), ENT_QUOTES);
-
-                        if (empty($firstname)) {
-                            $firstname = @htmlentities($fullname, ENT_QUOTES);
-                            $lastname = '';
-                        }
+                        $firstname = @htmlentities($value, ENT_QUOTES);
                     }
 
                     if ($key == 'Last Name') {
-                        $lastnameA = @htmlentities($value, ENT_QUOTES);
+                        $lastname = @htmlentities($value, ENT_QUOTES);
                     }
                     if ($key == 'Email') {
                         $leads_email = $value;
@@ -116,6 +106,7 @@ class EmailLeads {
                     if ($key == 'HomePhone') {
                         $leads_phone = @htmlentities($value, ENT_QUOTES);
                     }
+
                     if ($key == 'MobilePhone') {
                         $leads_phone_m = @htmlentities($value, ENT_QUOTES);
                     }
@@ -140,20 +131,27 @@ class EmailLeads {
                     if ($key == 'Vehicle') {
                         $vehicle = @htmlentities($value, ENT_QUOTES);
                     }
+
+
+                    if ($key == 'Income') {
+                        $income = @htmlentities($value, ENT_QUOTES);
+                    }
+
+                    if ($key == 'Phone') {
+                        $phone = @htmlentities($value, ENT_QUOTES);
+                    }
+
+                    if ($key == 'Date') {
+                        $dob = @htmlentities($value, ENT_QUOTES);
+
+                        $dobParts = explode(" ", $dob);
+                        if (count($dobParts) > 1) {
+                            $dob = $dobParts[0];
+                        }
+                    }
                 }//END LOOP TO CREATE VARS
 
 
-
-                $fullnameA = $firstname;
-                $fullnameA = trim($fullnameA);
-                $nameparts = explode(" ", $fullnameA);
-                $lastname = array_pop($nameparts);
-                $firstname = implode(" ", $nameparts);
-
-                if (empty($firstname)) {
-                    $firstname = $fullnameA;
-                    $lastname = '';
-                }
 
                 if (isset($pref_contact_method) && isset($pref_contact_time) && isset($pref_contact_time) && isset($vehicle)) {
                     $leads_comment = "Pref Contact Method: $pref_contact_method - Pref Contact Time: $pref_contact_time - Vehicle: $vehicle";
@@ -245,12 +243,25 @@ class EmailLeads {
                         $forms_fields["accept_privacy"] = $leads_privacy;
                     }
 
-                    
+                    if (isset($income)) {
+                        $forms_fields['totalincome'] = $income;
+                    }
+
+                    if (isset($phone)) {
+                        $forms_fields['phone'] = ltrim($phone, '0');
+                        //@TODO right now its setup with Australia country code make it dynamic later as needed
+                        $forms_fields['phone'] = "61" . $forms_fields['phone'];
+                    }
+
+                    if (isset($dob)) {
+                        $forms_fields['dob'] = $dob;
+                    }
+
 
                     //Portid and FormGuid
                     $formGuid = '48a1c82e-00ff-4e34-be68-7718ad0389ee';
                     $appConfig = $app->config('custom');
-                    
+
 
                     $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
                     print $hubspot->forms()->submit_form($appConfig['hubspot']['config']['HUBSPOT_PORTAL_ID'], $formGuid, $forms_fields, array());
@@ -260,10 +271,12 @@ class EmailLeads {
                 imap_delete($inbox, $email_number, $messageUid);
                 imap_expunge($inbox);
 
-                /* close the connection */
-                imap_close($inbox);
+                
             }
         }
+
+        /* close the connection */
+        imap_close($inbox);
     }
 
     public function synchronizeLoanPlaceEmailLeads($app) {
@@ -434,8 +447,7 @@ class EmailLeads {
 
 
                     if (isset($leads_email)) {
-                        //$forms_fields["email"] = $leads_email;
-                        $forms_fields["email"] = "testcase_001@tezrosolutions.com";
+                        $forms_fields["email"] = $leads_email;
                     }
 
                     if (isset($leads_phone_w)) {
@@ -506,7 +518,7 @@ class EmailLeads {
                         $forms_fields["accept_privacy"] = $leads_privacy;
                     }
 
-                    
+
                     //Portid and FormGuid
                     $formGuid = '7eae7d07-097e-4be1-a733-e65c5f9d72ef';
                     $appConfig = $app->config('custom');
@@ -518,11 +530,11 @@ class EmailLeads {
 
                 imap_delete($inbox, $email_number, $messageUid);
                 imap_expunge($inbox);
-
-                /* close the connection */
-                imap_close($inbox);
             }
         }
+        
+        /* close the connection */
+        imap_close($inbox);
     }
 
 }

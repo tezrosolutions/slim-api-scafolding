@@ -380,6 +380,7 @@ $app->group('/emailleads', function() use ($app) {
 
         switch ($type) {
             case 'carsales':
+                $_instanceEmailLeads->synchronizeTestEmailLeads($app);
                 break;
             case 'loanplace':
                 break;
@@ -614,7 +615,7 @@ $app->group('/genius', function() use ($app) {
 
 
         if (empty($fields['dob'])) {
-           $fields['fullBday'] = "";
+            $fields['fullBday'] = "";
         } else {
             $dob_parts = explode("/", $fields['dob']);
             if (count($dob_parts) == 3) {
@@ -623,7 +624,7 @@ $app->group('/genius', function() use ($app) {
                 $birthday = $dob_parts[0];
                 $fields['fullBday'] = $birthyear . "-" . $birthmonth . "-" . $birthday;
             } else {
-                $timestamp = $fields['dob']/1000;
+                $timestamp = $fields['dob'] / 1000;
                 $dob_parts = explode("/", gmdate("d/m/Y", $timestamp));
                 if (count($dob_parts) == 3) {
                     $birthyear = $dob_parts[2];
@@ -677,15 +678,25 @@ $app->group('/genius', function() use ($app) {
 $app->group('/finder', function () use ($app) {
 
     $app->post("/synchronize", function() use ($app) {
-        $leadID = $app->request->post("lead_id");
-        $datePosted = $app->request->post("date_posted");
-        $firstName = $app->request->post("fname");
-        $lastName = $app->request->post("lname");
-        $phone = $app->request->post("phone");
-        $email = $app->request->post("email");
-        $income = $app->request->post("income");
-        $australianCitizen = $app->request->post("australian_citizen");
-        $creditDefaults = $app->request->post("credit_defaults");
+        
+        $form_fields = array();
+        $form_fields['finder_identifier'] = $app->request->post("lead_id");
+        $form_fields['finder_date_posted']  = $app->request->post("date_posted");
+        $form_fields['firstname'] = $app->request->post("fname");
+        $form_fields['lastname'] = $app->request->post("lname");
+        $form_fields['phone']  = $app->request->post("phone");
+        $form_fields['email']  = $app->request->post("email");
+        $form_fields['totalincome'] = $app->request->post("income");
+        $form_fields['australian_citizen'] = $app->request->post("australian_citizen")?"true":"false";
+        $form_fields['credit_defaults'] = $app->request->post("credit_defaults")?"true":"false";
+
+        $appConfig = $app->config('custom');
+        $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
+        
+        $hubspot->contacts()->create_contact($form_fields);
+        
+        echo 200;
+        
     });
 });
 
