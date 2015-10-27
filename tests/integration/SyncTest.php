@@ -47,7 +47,7 @@ class SyncTest extends LocalWebTestCase {
       public function testEmailLeads() {
       $this->client->post('/emailleads/synchronize', array("username" => "umair@dev.1800approved.com.au", "password" => "U3D*vDfkF(;A", "type" => "test"), array('SERVER_NAME' => 'local.dev','PHP_AUTH_USER' => 'root','PHP_AUTH_PW' => 'r0Ot_C0n643'));
       $this->assertEquals(200, $this->client->response->status());
-      } */
+      } 
 
     public function testFinderSynchronize() {
         $this->client->post('/finder/synchronize', array("lead_id" => 1, "date_posted" => "2015-10-23 12:25", "fname" => "Testcase", "lname" => "Finder", "phone" => "1111111111", "email" => "testcase_finder_001@tezrosolutions.com", "income" => "5000", "australian_citizen" => true, "credit_defaults" => true), array('SERVER_NAME' => 'local.dev', 'PHP_AUTH_USER' => 'root', 'PHP_AUTH_PW' => 'r0Ot_C0n643'));
@@ -55,7 +55,13 @@ class SyncTest extends LocalWebTestCase {
 
         //checking if deal was properly entered and no error was produced
         $this->assertSame('200', $this->client->response->body());
-    }
+    }*/
+    
+    
+    public function testEmailLeads() {
+      $this->client->post('/emailleads/synchronize', array("username" => "umair@dev.1800approved.com.au", "password" => "U3D*vDfkF(;A", "type" => "loanplace"), array('SERVER_NAME' => 'local.dev','PHP_AUTH_USER' => 'root','PHP_AUTH_PW' => 'r0Ot_C0n643'));
+      $this->assertEquals(200, $this->client->response->status());
+      } 
 
 }
 

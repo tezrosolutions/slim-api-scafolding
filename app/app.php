@@ -383,6 +383,7 @@ $app->group('/emailleads', function() use ($app) {
                 $_instanceEmailLeads->synchronizeTestEmailLeads($app);
                 break;
             case 'loanplace':
+                $_instanceEmailLeads->synchronizeLoanPlaceEmailLeads($app);
                 break;
             case 'test':
                 $_instanceEmailLeads->synchronizeTestEmailLeads($app);
