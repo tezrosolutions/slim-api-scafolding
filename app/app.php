@@ -372,20 +372,23 @@ $app->group('/emailleads', function() use ($app) {
 
         $type = $app->request->post("type");
 
-        $_instanceEmailLeads->username = $app->request->post("username");
-
-        $_instanceEmailLeads->password = $app->request->post("password");
-
-
-
         switch ($type) {
             case 'carsales':
+                $_instanceEmailLeads->username = "carsales@dev.1800approved.com.au";
+                $_instanceEmailLeads->password = "CarSales101";
+
                 $_instanceEmailLeads->synchronizeTestEmailLeads($app);
                 break;
             case 'loanplace':
+                $_instanceEmailLeads->username = "loanplace@dev.1800approved.com.au";
+                $_instanceEmailLeads->password = "~.RQk#,IK}dy";
+
                 $_instanceEmailLeads->synchronizeLoanPlaceEmailLeads($app);
                 break;
             case 'test':
+                $_instanceEmailLeads->username = "umair@dev.1800approved.com.au";
+                $_instanceEmailLeads->password = "U3D*vDfkF(;A";
+
                 $_instanceEmailLeads->synchronizeTestEmailLeads($app);
                 break;
         }
@@ -679,25 +682,24 @@ $app->group('/genius', function() use ($app) {
 $app->group('/finder', function () use ($app) {
 
     $app->post("/synchronize", function() use ($app) {
-        
+
         $form_fields = array();
         $form_fields['finder_identifier'] = $app->request->post("lead_id");
-        $form_fields['finder_date_posted']  = $app->request->post("date_posted");
+        $form_fields['finder_date_posted'] = $app->request->post("date_posted");
         $form_fields['firstname'] = $app->request->post("fname");
         $form_fields['lastname'] = $app->request->post("lname");
-        $form_fields['phone']  = $app->request->post("phone");
-        $form_fields['email']  = $app->request->post("email");
+        $form_fields['phone'] = $app->request->post("phone");
+        $form_fields['email'] = $app->request->post("email");
         $form_fields['totalincome'] = $app->request->post("income");
-        $form_fields['australian_citizen'] = $app->request->post("australian_citizen")?"true":"false";
-        $form_fields['credit_defaults'] = $app->request->post("credit_defaults")?"true":"false";
+        $form_fields['australian_citizen'] = $app->request->post("australian_citizen") ? "true" : "false";
+        $form_fields['credit_defaults'] = $app->request->post("credit_defaults") ? "true" : "false";
 
         $appConfig = $app->config('custom');
         $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
-        
+
         $hubspot->contacts()->create_contact($form_fields);
-        
+
         echo 200;
-        
     });
 });
 

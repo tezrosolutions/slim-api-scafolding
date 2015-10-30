@@ -387,7 +387,7 @@ class EmailLeads {
                     }
 
                     if (isset($json_obj['What are you looking to finance?'])) {
-                        $contact_fields["loan_purpose"] = $json_obj['What are you looking to finance?'];
+                        $contact_fields["loan_purpose"] = strtolower(str_replace(" ", "", $json_obj['What are you looking to finance?']));
                     }
 
                     if (isset($json_obj['What is the age of the asset?'])) {
@@ -399,7 +399,7 @@ class EmailLeads {
                     }
 
                     if (isset($json_obj['What loan amount are you looking for?'])) {
-                        $contact_fields["approved_loan_amount"] = $json_obj['What loan amount are you looking for?'];
+                        $contact_fields["loanplace_loan_amount"] = $json_obj['What loan amount are you looking for?'];
                     }
 
 
@@ -410,7 +410,23 @@ class EmailLeads {
 
 
                     if (isset($json_obj['What is your employment status?'])) {
-                        $contact_fields["employment_type_"] = $json_obj['What is your employment status?'];
+                        
+                        
+                        switch($contact_fields["employment_type_"]) {
+                            case 'Unemployed':
+                                $contact_fields["employment_type_"] = "un_employed";
+                                break;
+                            case 'N/A - Business':
+                                $contact_fields["employment_type_"] = "business";
+                                break;
+                             case 'Self Employed':
+                                $contact_fields["employment_type_"] = "self_employment";
+                                break;
+                            default:
+                                $contact_fields["employment_type_"] = strtolower(str_replace(" ", "_", $json_obj['What is your employment status?']));
+                                break;
+                        }
+                        
                     }
 
                     if (isset($json_obj['What is your credit history?'])) {
@@ -437,12 +453,11 @@ class EmailLeads {
 
 
 
-
                     $appConfig = $app->config('custom');
 
                     $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
                     $response = $hubspot->contacts()->create_contact($contact_fields);
-                    
+
                     if ($app->log->getEnabled()) {
                         $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Sync Request Body: ' . json_encode($contact_fields));
                         $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Sync Response: ' . json_encode($response));
