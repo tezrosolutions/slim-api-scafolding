@@ -50,7 +50,7 @@ class EmailLeads {
                 $structure = imap_fetchstructure($inbox, $email_number, ST_UID);
 
 
-                $output .= $message;
+                $output = $message;
 
 
                 $output = preg_replace("/[\n]/", ";", $output);
@@ -140,14 +140,20 @@ class EmailLeads {
                     if ($key == 'Phone') {
                         $phone = @htmlentities($value, ENT_QUOTES);
                     }
-
-                    if ($key == 'Date') {
+                    
+                    
+                    //@TODO find a solution for date later
+                    /*if ($key == 'Date') {
                         $dob = @htmlentities($value, ENT_QUOTES);
+                    }*/
 
-                        $dobParts = explode(" ", $dob);
-                        if (count($dobParts) > 1) {
-                            $dob = $dobParts[0];
-                        }
+
+                    if ($key == 'Australian Citizen') {
+                        $australianCitizen = (@htmlentities($value, ENT_QUOTES)=="Yes")?true:false;
+                    }
+
+                    if ($key == 'Credit Defaults') {
+                        $creditDefaults = (@htmlentities($value, ENT_QUOTES)=="Yes")?true:false;
                     }
                 }//END LOOP TO CREATE VARS
 
@@ -257,14 +263,24 @@ class EmailLeads {
                         $forms_fields['dob'] = $dob;
                     }
 
+                    if (isset($australianCitizen)) {
+                        $forms_fields['australian_citizen'] = $australianCitizen;
+                    }
 
-                    //Portid and FormGuid
-                    $formGuid = '48a1c82e-00ff-4e34-be68-7718ad0389ee';
+                    if (isset($creditDefaults)) {
+                        $forms_fields['credit_defaults'] = $creditDefaults;
+                    }
+
+
                     $appConfig = $app->config('custom');
 
-
                     $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
-                    print $hubspot->forms()->submit_form($appConfig['hubspot']['config']['HUBSPOT_PORTAL_ID'], $formGuid, $forms_fields, array());
+                    $response = $hubspot->contacts()->create_contact($forms_fields);
+
+                    if ($app->log->getEnabled()) {
+                        $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Sync Request Body: ' . json_encode($forms_fields));
+                        $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Sync Response: ' . json_encode($response));
+                    }
                 }
                 /*                 * *** DELETE EMAILS **** */
 
@@ -310,7 +326,7 @@ class EmailLeads {
                 $structure = imap_fetchstructure($inbox, $email_number, ST_UID);
 
 
-                $output .= $message;
+                $output = $message;
 
 
                 $output = preg_replace("/[\n]/", ";", $output);
@@ -410,23 +426,22 @@ class EmailLeads {
 
 
                     if (isset($json_obj['What is your employment status?'])) {
-                        
-                        
-                        switch($contact_fields["employment_type_"]) {
+
+
+                        switch ($json_obj['What is your employment status?']) {
                             case 'Unemployed':
                                 $contact_fields["employment_type_"] = "un_employed";
                                 break;
                             case 'N/A - Business':
                                 $contact_fields["employment_type_"] = "business";
                                 break;
-                             case 'Self Employed':
+                            case 'Self Employed':
                                 $contact_fields["employment_type_"] = "self_employment";
                                 break;
                             default:
                                 $contact_fields["employment_type_"] = strtolower(str_replace(" ", "_", $json_obj['What is your employment status?']));
                                 break;
                         }
-                        
                     }
 
                     if (isset($json_obj['What is your credit history?'])) {

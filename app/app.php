@@ -586,6 +586,15 @@ $app->group('/genius', function() use ($app) {
         $fields['accessCode'] = "money3";
         $fields['accessPass'] = "flying123";
 
+
+        $field['current_residency_length'] = (int) preg_replace('/\D/', '', $field['current_residency_length']);
+        $field['current_residency_length'] = intval($field['current_residency_length']/12);
+        $field['residmonth'] = intval(($field['current_residency_length']%12)*12);
+        
+        $field['employment_length'] = (int) preg_replace('/\D/', '', $field['employment_length']);
+        $field['employment_length'] = intval($field['employment_length']/12);
+        $field['emplengthmonth'] = intval(($field['employment_length']%12)*12);
+        
         //@TODO inquire about these
         $fields['leads_businesstype'] = $fields['leads_assignee'] = $fields['unitno'] = $fields['streetno'] = $fields['streettype'] = $fields['residmonth'] = $fields['leads_lic'] = $fields['emplengthmonth'] = $fields['mortgagePayments'] = $fields['rentPayments'] = $fields['utm_medium'] = $fields['utm_cname'] = $fields['utm_cterm'] = $fields['utm_ccontent'] = $fields['leads_income2'] = "";
 
