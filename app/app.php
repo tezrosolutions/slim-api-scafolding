@@ -581,12 +581,12 @@ $app->group('/genius', function() use ($app) {
                 $fields = array();
                 $fields['settlement_dt'] = $settlementDate;
                 $hsUpdateResponse = $hubspot->contacts()->update_contact($contactID, $fields);
-                
+
                 if ($app->log->getEnabled()) {
                     $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Settlement Update Request Body: ' . json_encode($fields));
                     $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Settlement Update Response Body: ' . $hsUpdateResponse);
                 }
-                
+
                 echo 200;
             } else {
                 echo 400;
@@ -756,14 +756,17 @@ $app->group('/genius', function() use ($app) {
         $fields['accessCode'] = "money3";
         $fields['accessPass'] = "flying123";
 
+        if (isset($fields['current_residency_length'])) {
+            $fields['current_residency_length'] = (int) preg_replace('/\D/', '', $fields['current_residency_length']);
+            $fields['current_residency_length'] = intval($fields['current_residency_length'] / 12);
+            $fields['residmonth'] = intval(($fields['current_residency_length'] % 12) * 12);
+        }
 
-        $field['current_residency_length'] = (int) preg_replace('/\D/', '', $field['current_residency_length']);
-        $field['current_residency_length'] = intval($field['current_residency_length'] / 12);
-        $field['residmonth'] = intval(($field['current_residency_length'] % 12) * 12);
-
-        $field['employment_length'] = (int) preg_replace('/\D/', '', $field['employment_length']);
-        $field['employment_length'] = intval($field['employment_length'] / 12);
-        $field['emplengthmonth'] = intval(($field['employment_length'] % 12) * 12);
+        if (isset($fields['employment_length'])) {
+            $fields['employment_length'] = (int) preg_replace('/\D/', '', $fields['employment_length']);
+            $fields['employment_length'] = intval($fields['employment_length'] / 12);
+            $fields['emplengthmonth'] = intval(($fields['employment_length'] % 12) * 12);
+        }
 
         //@TODO inquire about these
         $fields['leads_businesstype'] = $fields['leads_assignee'] = $fields['unitno'] = $fields['streetno'] = $fields['streettype'] = $fields['residmonth'] = $fields['leads_lic'] = $fields['emplengthmonth'] = $fields['mortgagePayments'] = $fields['rentPayments'] = $fields['utm_medium'] = $fields['utm_cname'] = $fields['utm_cterm'] = $fields['utm_ccontent'] = $fields['leads_income2'] = "";
