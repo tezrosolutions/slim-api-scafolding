@@ -873,8 +873,8 @@ $app->group('/finder', function () use ($app) {
         $form_fields['phone'] = $app->request->post("phone");
         $form_fields['email'] = $app->request->post("email");
         $form_fields['totalincome'] = $app->request->post("income");
-        $form_fields['australian_citizen'] = ($app->request->post("australian_citizen") == "Yes") ? true : false;
-        $form_fields['credit_defaults'] = ($app->request->post("credit_defaults") == "Yes") ? true : false;
+        $form_fields['australian_citizen'] = (strtolower($app->request->post("australian_citizen")) == "yes") ? true : false;
+        $form_fields['credit_defaults'] = (strtolower($app->request->post("credit_defaults")) == "yes") ? true : false;
 
         $appConfig = $app->config('custom');
         $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
