@@ -873,13 +873,22 @@ $app->group('/finder', function () use ($app) {
         $form_fields['phone'] = $app->request->post("phone");
         $form_fields['email'] = $app->request->post("email");
         $form_fields['totalincome'] = $app->request->post("income");
-        $form_fields['australian_citizen'] = $app->request->post("australian_citizen") ? "true" : "false";
-        $form_fields['credit_defaults'] = $app->request->post("credit_defaults") ? "true" : "false";
+        $form_fields['australian_citizen'] = ($app->request->post("australian_citizen") == "Yes") ? true : false;
+        $form_fields['credit_defaults'] = ($app->request->post("credit_defaults") == "Yes") ? true : false;
 
         $appConfig = $app->config('custom');
         $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
 
-        $hubspot->contacts()->create_contact($form_fields);
+
+
+
+        $hsResponse = $hubspot->contacts()->create_contact($form_fields);
+
+
+        if ($app->log->getEnabled()) {
+            $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Contact Request: ' . json_encode($form_fields));
+            $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Contact Response Body: ' . json_encode($hsResponse));
+        }
 
         echo 200;
     });
