@@ -237,7 +237,7 @@ $app->group('/contactspace', function () use ($app) {
         $contactSpaceXML .= "</record>";
 
         //post to ContactSpace
-        $contactSpaceSyncResponseArr = $contactSpace->insertRecord($contactSpaceXML);
+        $contactSpaceSyncResponseArr = $contactSpace->insertRecord(urlencode($contactSpaceXML));
 
         //log ContactSpace request and response
         if ($app->log->getEnabled()) {

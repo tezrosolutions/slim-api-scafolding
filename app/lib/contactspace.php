@@ -21,17 +21,6 @@ class ContactSpace {
     public function insertRecord($xml) {
 
         $this->postURL = $this->_url . '/?apikey=' . $this->_apiKey . '&function=InsertRecord&module=data&datasetid=' . $this->_datasetID . '&xmldata=' . $xml;
-        /*$ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->postURL);
-        curl_setopt($ch, CURLOPT_HEADER, 1);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-        curl_setopt($ch, CURLINFO_HEADER_OUT, 1);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/xml'));
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $xml);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-
-        $result = curl_exec($ch);*/
         
         $ch = curl_init();
         curl_setopt($ch,CURLOPT_URL, $this->postURL);
