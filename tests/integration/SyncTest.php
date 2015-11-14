@@ -62,7 +62,7 @@ class SyncTest extends LocalWebTestCase {
       } */
 
     public function testGeniusUpdateHubSpot() {
-        $this->client->post('/genius/updateHubSpot', array("status" => "0001", "gid" => "30349", "vid" => "12561603", "settlement_date" => "1446681600000"), array('SERVER_NAME' => 'local.dev', 'PHP_AUTH_USER' => 'root', 'PHP_AUTH_PW' => 'r0Ot_C0n643'));
+        $this->client->post('/genius/updateHubSpot', array("gid" => "30349", "vid" => "12561603", "settlement_date" => "1446681600000"), array('SERVER_NAME' => 'local.dev', 'PHP_AUTH_USER' => 'root', 'PHP_AUTH_PW' => 'r0Ot_C0n643'));
         $this->assertEquals(200, $this->client->response->status());
     }
 

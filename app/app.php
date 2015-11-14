@@ -591,8 +591,8 @@ $app->group('/genius', function() use ($app) {
                 $fields['settlement_dt'] = $settlementDate;
             }
 
-            if (isset($status)) {
-                $fields['hs_lead_status'] = $customConfig['hubspot']['dealStatuses'][$status];
+            if (array_key_exists($status, $customConfig['hubspot']['dealStatuses'])) {
+                    $fields['hs_lead_status'] = $customConfig['hubspot']['dealStatuses'][$status];
             }
 
             $hsUpdateResponse = $hubspot->contacts()->update_contact($contactID, $fields);
