@@ -235,7 +235,7 @@ $app->group('/contactspace', function () use ($app) {
         
         
         if (array_key_exists('lead_source', $fields))
-            $contactSpaceXML .= "<Source>" . $fields['lead_source'] . "</Source>";
+            $contactSpaceXML .= "<Source>" . ucfirst ($fields['lead_source']) . "</Source>";
 
 
         $contactSpaceXML .= "</record>";
@@ -751,7 +751,7 @@ $app->group('/genius', function() use ($app) {
                     $key == "email" || $key == "company" || $key == "broker_email" || $key == "gender" ||
                     $key == "address" || $key == "city" || $key == "state" || $key == "current_residency_length" ||
                     $key == "utm" || $key == "totalincome" || $key == "feedback_comments" || $key == "hs_lead_status" ||
-                    $key == "mobilephone" || $key == "private_phone_number" || $key == "suburb")
+                    $key == "mobilephone" || $key == "private_phone_number" || $key == "suburb"  || $key == "lead_source")
                 $fields[$key] = $property->value;
         }
 
@@ -857,8 +857,8 @@ $app->group('/genius', function() use ($app) {
             $fields['property'] = $instanceGenius->getCoplCodes('residential_statuses', $fields['home_sts'], 'residentialstatus');
         else
             $fields['property'] = "";
+  
         
-
         if (!empty($fields['lead_source']))
             $fields['lead_source'] = $instanceGenius->getCoplCodes('source_statuses', $fields['lead_source'], 'sourcestatus');
         else
