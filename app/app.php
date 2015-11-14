@@ -398,6 +398,154 @@ $app->group('/contactspace', function () use ($app) {
 
         echo $contactSpaceSyncResponseArr[0];
     });
+
+
+    /*
+     * Called from HubSpot to synchronize contact on ContactSpace
+     * Receives JSON object in request body
+     */
+    $app->post('/outbound/adhoc', function($months) use ($app) {
+        $entityBody = $app->request->getBody();
+
+        require_once('app/lib/contactspace.php');
+        $contactSpace = new Custom\Libs\ContactSpace();
+
+
+        $hubspotData = json_decode($entityBody);
+
+        $fields = array();
+        $fields['vid'] = $hubspotData->vid;
+
+        //extracting contact information from HubSpot
+        foreach ($hubspotData->properties as $key => $property) {
+            if ($key == "lastname" || $key == "phone" || $key == "firstname" || $key == "hubspot_owner_id" ||
+                    $key == "loan_purpose" || $key == "approved_loan_amount" || $key == "yes_i_accept" ||
+                    $key == "employment_type_" || $key == "credit_status" || $key == "postal_code" ||
+                    $key == "home_sts" || $key == "employment_length" || $key == "current_residency_length" ||
+                    $key == "marital_status" || $key == "number_of_children" || $key == "mobilephone" ||
+                    $key == "broker_email" || $key == "business_no" || $key == "settlement_dt")
+                $fields[$key] = $property->value;
+        }
+
+        if (isset($field['settlement_dt'])) {
+            $settlementDate = $field['settlement_dt'] / 1000;
+            $currentTimestamp = time();
+
+
+            $timeSinceSettlement = $currentTimestamp - $settlementDate;
+
+            if ($timeSinceSettlement >= 30 && $timeSinceSettlement < 180) {
+                $contactSpace->_datasetID = 15;
+            } else if ($timeSinceSettlement >= 180 && $timeSinceSettlement < 330) {
+                $contactSpace->_datasetID = 16;
+            } else if ($timeSinceSettlement >= 330 && $timeSinceSettlement < 540) {
+                $contactSpace->_datasetID = 17;
+            } else if ($timeSinceSettlement >= 540 && $timeSinceSettlement < 690) {
+                $contactSpace->_datasetID = 18;
+            } else if ($timeSinceSettlement >= 690 && $timeSinceSettlement < 1080) {
+                $contactSpace->_datasetID = 19;
+            } else if ($timeSinceSettlement >= 1080) {
+                $contactSpace->_datasetID = 20;
+            }
+        }
+
+        if ($app->log->getEnabled())
+            $app->log->debug('[' . date('H:i:s', time()) . '] ContactSpace Selected Dataset: ' . $contactSpace->_datasetID);
+
+
+
+
+        //preparing XML to be posted on ContactSpace
+
+
+
+        $contactSpaceXML = "<record><Record_ID>" . $fields['vid'] . "</Record_ID>";
+
+        if (array_key_exists('phone', $fields)) {
+            $fields['phone'] = ltrim($fields['phone'], '0');
+            //@TODO right now its setup with Australia country code make it dynamic later as needed
+            $fields['phone'] = "61" . $fields['phone'];
+            //$contactSpaceXML .= "<Phone>" . $fields['phone'] . "</Phone>";
+            $contactSpaceXML .= "<Mobile_Phone>" . $fields['phone'] . "</Mobile_Phone>";
+        }
+
+        if (array_key_exists('business_no', $fields)) {
+            $fields['business_no'] = ltrim($fields['business_no'], '0');
+            //@TODO right now its setup with Australia country code make it dynamic later as needed
+            $fields['business_no'] = "61" . $fields['business_no'];
+            //$contactSpaceXML .= "<Work_Phone>" . $fields['business_no'] . "</Work_Phone>";
+            $contactSpaceXML .= "<Mobile_Phone>" . $fields['business_no'] . "</Mobile_Phone>";
+        }
+
+        if (array_key_exists('mobilephone', $fields)) {
+            $fields['mobilephone'] = ltrim($fields['mobilephone'], '0');
+            //@TODO right now its setup with Australia country code make it dynamic later as needed
+            $fields['mobilephone'] = "61" . $fields['mobilephone'];
+            $contactSpaceXML .= "<Mobile_Phone>" . $fields['mobilephone'] . "</Mobile_Phone>";
+        }
+
+        if (array_key_exists('firstname', $fields))
+            $contactSpaceXML .= "<First_Name>" . $fields['firstname'] . "</First_Name>";
+
+        if (array_key_exists('lastname', $fields))
+            $contactSpaceXML .= "<Last_Name>" . $fields['lastname'] . "</Last_Name>";
+
+
+        if (array_key_exists('loan_purpose', $fields))
+            $contactSpaceXML .= "<Loan_Purpose>" . $fields['loan_purpose'] . "</Loan_Purpose>";
+
+
+        if (array_key_exists('approved_loan_amount', $fields))
+            $contactSpaceXML .= "<Loan_Amount>" . $fields['approved_loan_amount'] . "</Loan_Amount>";
+
+        if (array_key_exists('yes_i_accept', $fields))
+            $contactSpaceXML .= "<Privacy_Policy_Consent_Accepted>" . $fields['yes_i_accept'] . "</Privacy_Policy_Consent_Accepted>";
+
+        if (array_key_exists('employment_type_', $fields))
+            $contactSpaceXML .= "<Employment_Type>" . $fields['employment_type_'] . "</Employment_Type>";
+
+        if (array_key_exists('credit_status', $fields))
+            $contactSpaceXML .= "<Credit_Status>" . $fields['credit_status'] . "</Credit_Status>";
+
+        if (array_key_exists('postal_code', $fields))
+            $contactSpaceXML .= "<Postal_Code>" . $fields['postal_code'] . "</Postal_Code>";
+
+        if (array_key_exists('home_sts', $fields))
+            $contactSpaceXML .= "<Resident_Status>" . $fields['home_sts'] . "</Resident_Status>";
+
+        if (array_key_exists('employment_length', $fields))
+            $contactSpaceXML .= "<Employment_Length>" . $fields['employment_length'] . "</Employment_Length>";
+
+        if (array_key_exists('current_residency_length', $fields))
+            $contactSpaceXML .= "<Current_Residency_Length>" . $fields['current_residency_length'] . "</Current_Residency_Length>";
+
+        if (array_key_exists('marital_status', $fields))
+            $contactSpaceXML .= "<Marital_Status>" . $fields['marital_status'] . "</Marital_Status>";
+
+        if (array_key_exists('number_of_children', $fields))
+            $contactSpaceXML .= "<Number_of_Children>" . $fields['number_of_children'] . "</Number_of_Children>";
+
+        if (array_key_exists('broker_email', $fields))
+            $contactSpaceXML .= "<Broker_email>" . $fields['broker_email'] . "</Broker_email>";
+
+        if (array_key_exists('lead_source', $fields))
+            $contactSpaceXML .= "<Source>" . $fields['lead_source'] . "</Source>";
+
+
+        $contactSpaceXML .= "</record>";
+
+        //post to ContactSpace
+        $contactSpaceSyncResponseArr = $contactSpace->insertRecord($contactSpaceXML);
+
+        //log ContactSpace request and response
+        if ($app->log->getEnabled()) {
+            $app->log->debug('[' . date('H:i:s', time()) . '] ContactSpace Sync Request: ' . $contactSpaceXML);
+            $app->log->debug('[' . date('H:i:s', time()) . '] ContactSpace Sync Response Body: ' . $contactSpaceSyncResponseArr[1]);
+            $app->log->debug('[' . date('H:i:s', time()) . '] ContactSpace Sync Response: ' . $contactSpaceSyncResponseArr[0]);
+        }
+
+        echo $contactSpaceSyncResponseArr[0];
+    });
 });
 
 
@@ -592,7 +740,7 @@ $app->group('/genius', function() use ($app) {
             }
 
             if (array_key_exists($status, $customConfig['hubspot']['dealStatuses'])) {
-                    $fields['hs_lead_status'] = $customConfig['hubspot']['dealStatuses'][$status];
+                $fields['hs_lead_status'] = $customConfig['hubspot']['dealStatuses'][$status];
             }
 
             $hsUpdateResponse = $hubspot->contacts()->update_contact($contactID, $fields);
