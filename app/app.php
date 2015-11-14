@@ -427,8 +427,8 @@ $app->group('/contactspace', function () use ($app) {
                 $fields[$key] = $property->value;
         }
 
-        if (isset($field['settlement_dt'])) {
-            $settlementDate = $field['settlement_dt'] / 1000;
+        if (isset($fields['settlement_dt'])) {
+            $settlementDate = $fields['settlement_dt'] / 1000;
             $currentTimestamp = time();
 
 
