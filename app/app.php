@@ -232,10 +232,10 @@ $app->group('/contactspace', function () use ($app) {
 
         if (array_key_exists('broker_email', $fields))
             $contactSpaceXML .= "<Broker_email>" . $fields['broker_email'] . "</Broker_email>";
-        
-        
+
+
         if (array_key_exists('lead_source', $fields))
-            $contactSpaceXML .= "<Source>" . ucfirst ($fields['lead_source']) . "</Source>";
+            $contactSpaceXML .= "<Source>" . ucfirst($fields['lead_source']) . "</Source>";
 
 
         $contactSpaceXML .= "</record>";
@@ -575,35 +575,45 @@ $app->group('/genius', function() use ($app) {
         $vid = $app->request->post("vid");
         $gid = $app->request->post("gid");
         $settlementDate = $app->request->post("settlement_date");
+        $status = $app->request->post("status");
+
+        $customConfig = $app->config('custom');
+
+        $dealOfInterest = $hubspotExt->getDeal($vid)[1];
 
 
+        if (isset(json_decode($dealOfInterest)->associations->associatedVids[0])) {//update lead status and settlement date
+            $contactID = json_decode($dealOfInterest)->associations->associatedVids[0];
+            $hubspot = new Fungku\HubSpot($customConfig['hubspot']['config']['HUBSPOT_API_KEY']);
 
-        if (isset($settlementDate)) { //update settlement date
-            $dealOfInterest = $hubspotExt->getDeal($vid)[1];
-            if (isset(json_decode($dealOfInterest)->associations->associatedVids[0])) {
-                $contactID = json_decode($dealOfInterest)->associations->associatedVids[0];
-                $appConfig = $app->config('custom');
-                $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
-
-                $fields = array();
+            $fields = array();
+            if (isset($settlementDate)) {
                 $fields['settlement_dt'] = $settlementDate;
-                $hsUpdateResponse = $hubspot->contacts()->update_contact($contactID, $fields);
-
-                if ($app->log->getEnabled()) {
-                    $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Settlement Update Request Body: ' . json_encode($fields));
-                    $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Settlement Update Response Body: ' . $hsUpdateResponse);
-                }
-
-                echo 200;
-            } else {
-                echo 400;
             }
-        } else { //update deal status
-            $customConfig = $app->config('custom');
-            if (array_key_exists($app->request->post("status"), $customConfig['hubspot']['dealStatuses'])) {
-                $status = $customConfig['hubspot']['dealStatuses'][$app->request->post("status")];
 
-                $fields = '
+            if (isset($status)) {
+                $fields['hs_lead_status'] = $customConfig['hubspot']['dealStatuses'][$status];
+            }
+
+            $hsUpdateResponse = $hubspot->contacts()->update_contact($contactID, $fields);
+
+            if ($app->log->getEnabled()) {
+                $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot contact Update Requst Body: ' . json_encode($fields));
+                $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot contact Update Response Body: ' . json_encode($hsUpdateResponse));
+            }
+        } else {
+            if ($app->log->getEnabled()) {
+                $app->log->debug('[' . date('H:i:s', time()) . '] No HubSpot contact associated with this deal: ' . json_encode($fields));
+            }
+        }
+
+
+
+        //update deal status
+        if (array_key_exists($status, $customConfig['hubspot']['dealStatuses'])) {
+            $status = $customConfig['hubspot']['dealStatuses'][$app->request->post("status")];
+
+            $fields = '
             {
             "properties": [
                 {
@@ -613,23 +623,22 @@ $app->group('/genius', function() use ($app) {
             ]
         }';
 
-                $dealGetResponseArr = $hubspotExt->updateDeal($vid, $fields);
+            $dealGetResponseArr = $hubspotExt->updateDeal($vid, $fields);
 
-                if ($app->log->getEnabled()) {
-                    $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Request Body: ' . $fields);
-                    $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Response Body: ' . $dealGetResponseArr[1]);
-                    $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Response Status: ' . $dealGetResponseArr[0]);
-                }
-
-
-                echo $dealGetResponseArr[0];
-            } else {
-                if ($app->log->getEnabled()) {
-                    $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Error: Invalid status code');
-                }
-
-                echo 400;
+            if ($app->log->getEnabled()) {
+                $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Request Body: ' . $fields);
+                $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Response Body: ' . $dealGetResponseArr[1]);
+                $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Response Status: ' . $dealGetResponseArr[0]);
             }
+
+
+            echo $dealGetResponseArr[0];
+        } else {
+            if ($app->log->getEnabled()) {
+                $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Error: Invalid status code');
+            }
+
+            echo 400;
         }
     });
 
@@ -751,7 +760,7 @@ $app->group('/genius', function() use ($app) {
                     $key == "email" || $key == "company" || $key == "broker_email" || $key == "gender" ||
                     $key == "address" || $key == "city" || $key == "state" || $key == "current_residency_length" ||
                     $key == "utm" || $key == "totalincome" || $key == "feedback_comments" || $key == "hs_lead_status" ||
-                    $key == "mobilephone" || $key == "private_phone_number" || $key == "suburb"  || $key == "lead_source")
+                    $key == "mobilephone" || $key == "private_phone_number" || $key == "suburb" || $key == "lead_source")
                 $fields[$key] = $property->value;
         }
 
@@ -857,8 +866,8 @@ $app->group('/genius', function() use ($app) {
             $fields['property'] = $instanceGenius->getCoplCodes('residential_statuses', $fields['home_sts'], 'residentialstatus');
         else
             $fields['property'] = "";
-  
-        
+
+
         if (!empty($fields['lead_source']))
             $fields['lead_source'] = $instanceGenius->getCoplCodes('source_statuses', $fields['lead_source'], 'sourcestatus');
         else
