@@ -155,7 +155,7 @@ $app->group('/contactspace', function () use ($app) {
                     $key == "employment_type_" || $key == "credit_status" || $key == "postal_code" ||
                     $key == "home_sts" || $key == "employment_length" || $key == "current_residency_length" ||
                     $key == "marital_status" || $key == "number_of_children" || $key == "mobilephone" ||
-                    $key == "broker_email" || $key == "business_no")
+                    $key == "broker_email" || $key == "business_no" || $key == "lead_source")
                 $fields[$key] = $property->value;
         }
 
@@ -232,6 +232,10 @@ $app->group('/contactspace', function () use ($app) {
 
         if (array_key_exists('broker_email', $fields))
             $contactSpaceXML .= "<Broker_email>" . $fields['broker_email'] . "</Broker_email>";
+        
+        
+        if (array_key_exists('lead_source', $fields))
+            $contactSpaceXML .= "<Source>" . $fields['lead_source'] . "</Source>";
 
 
         $contactSpaceXML .= "</record>";
@@ -375,6 +379,9 @@ $app->group('/contactspace', function () use ($app) {
 
         if (array_key_exists('broker_email', $fields))
             $contactSpaceXML .= "<Broker_email>" . $fields['broker_email'] . "</Broker_email>";
+
+        if (array_key_exists('lead_source', $fields))
+            $contactSpaceXML .= "<Source>" . $fields['lead_source'] . "</Source>";
 
 
         $contactSpaceXML .= "</record>";
@@ -648,7 +655,7 @@ $app->group('/genius', function() use ($app) {
                     $key == "loan_purpose" || $key == "approved_loan_amount" || $key == "yes_i_accept" ||
                     $key == "employment_type_" || $key == "credit_status" || $key == "postal_code" ||
                     $key == "home_sts" || $key == "employment_length" || $key == "current_residency_length" ||
-                    $key == "marital_status" || $key == "number_of_children")
+                    $key == "marital_status" || $key == "number_of_children" || $key == "lead_source")
                 $fields[$key] = $property->value;
         }
 
@@ -845,11 +852,17 @@ $app->group('/genius', function() use ($app) {
         else
             $fields['employment'] = "";
 
+
         if (!empty($fields['home_sts']))
             $fields['property'] = $instanceGenius->getCoplCodes('residential_statuses', $fields['home_sts'], 'residentialstatus');
         else
             $fields['property'] = "";
+        
 
+        if (!empty($fields['lead_source']))
+            $fields['lead_source'] = $instanceGenius->getCoplCodes('source_statuses', $fields['lead_source'], 'sourcestatus');
+        else
+            $fields['lead_source'] = "";
 
 
 

@@ -265,12 +265,27 @@ $jsonResidential_status = '{
   ]
 }';
 
+
+$jsonSource_status = '{
+  "sourcestatus":[
+  	{"code": "RAD", "desc": "radio"},
+  	{"code": "GGL", "desc": "google"},
+  	{"code": "TV", "desc": "tv"},
+  	{"code": "FB", "desc": "facebook"},
+  	{"code": "NWPR", "desc": "newspaper"},
+  	{"code": "MAG", "desc": "magazine"},
+        {"code": "WOM", "desc": "word_of_mouth"}
+  ]
+}';
+
+
 $coplCodes = array(
     "street_codes" => $jsonStreet_code,
     "loan_types" => $jsonLoan_type,
     "marital_statuses" => $jsonMarital_status,
     "employnents_types" => $jsonEmployment_type,
-    "residential_statuses" => $jsonResidential_status
+    "residential_statuses" => $jsonResidential_status,
+    "source_statuses" => $jsonSource_status
 );
 
 

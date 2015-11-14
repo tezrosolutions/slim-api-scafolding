@@ -32,9 +32,6 @@ class Genius {
         return $coplCodeReturn;
     }
 
-
-    
-
     public function post($fields) {
 
         $xml = "
@@ -90,6 +87,7 @@ class Genius {
       <CreditGuideIndicator></CreditGuideIndicator>
       <Comments>" . (isset($fields['feedback_comments']) ? $fields['feedback_comments'] : "") . "</Comments>
       <LeadStatus>" . (isset($fields['hs_lead_status']) ? $fields['hs_lead_status'] : "") . "</LeadStatus>
+      <AppSource>" . (isset($fields['lead_source']) ? $fields['lead_source'] : "") . "</AppSource>
    </LeadData>
 </Lead>";
 
