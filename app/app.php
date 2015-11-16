@@ -404,7 +404,7 @@ $app->group('/contactspace', function () use ($app) {
      * Called from HubSpot to synchronize contact on ContactSpace
      * Receives JSON object in request body
      */
-    $app->post('/outbound/adhoc', function($months) use ($app) {
+    $app->post('/outbound_adhoc', function() use ($app) {
         $entityBody = $app->request->getBody();
 
         require_once('app/lib/contactspace.php');
@@ -433,26 +433,29 @@ $app->group('/contactspace', function () use ($app) {
 
 
             $timeSinceSettlement = $currentTimestamp - $settlementDate;
+            
+            $daysSinceSettlemt = floor($timeSinceSettlement/(60*60*24));
 
-            if ($timeSinceSettlement >= 30 && $timeSinceSettlement < 180) {
+            if ($daysSinceSettlemt >= 30 && $daysSinceSettlemt < 180) {
                 $contactSpace->_datasetID = 15;
-            } else if ($timeSinceSettlement >= 180 && $timeSinceSettlement < 330) {
+            } else if ($daysSinceSettlemt >= 180 && $daysSinceSettlemt < 330) {
                 $contactSpace->_datasetID = 16;
-            } else if ($timeSinceSettlement >= 330 && $timeSinceSettlement < 540) {
+            } else if ($daysSinceSettlemt >= 330 && $daysSinceSettlemt < 540) {
                 $contactSpace->_datasetID = 17;
-            } else if ($timeSinceSettlement >= 540 && $timeSinceSettlement < 690) {
+            } else if ($daysSinceSettlemt >= 540 && $daysSinceSettlemt < 690) {
                 $contactSpace->_datasetID = 18;
-            } else if ($timeSinceSettlement >= 690 && $timeSinceSettlement < 1080) {
+            } else if ($daysSinceSettlemt >= 690 && $daysSinceSettlemt < 1080) {
                 $contactSpace->_datasetID = 19;
-            } else if ($timeSinceSettlement >= 1080) {
+            } else if ($daysSinceSettlemt >= 1080) {
                 $contactSpace->_datasetID = 20;
             }
         }
 
-        if ($app->log->getEnabled())
+        if ($app->log->getEnabled()) {
+            $app->log->debug('[' . date('H:i:s', time()) . '] Days passed since settlement: ' . $daysSinceSettlemt);
             $app->log->debug('[' . date('H:i:s', time()) . '] ContactSpace Selected Dataset: ' . $contactSpace->_datasetID);
 
-
+        }
 
 
         //preparing XML to be posted on ContactSpace
@@ -461,27 +464,27 @@ $app->group('/contactspace', function () use ($app) {
 
         $contactSpaceXML = "<record><Record_ID>" . $fields['vid'] . "</Record_ID>";
 
-        if (array_key_exists('phone', $fields)) {
-            $fields['phone'] = ltrim($fields['phone'], '0');
-            //@TODO right now its setup with Australia country code make it dynamic later as needed
-            $fields['phone'] = "61" . $fields['phone'];
-            //$contactSpaceXML .= "<Phone>" . $fields['phone'] . "</Phone>";
-            $contactSpaceXML .= "<Mobile_Phone>" . $fields['phone'] . "</Mobile_Phone>";
-        }
+        
 
-        if (array_key_exists('business_no', $fields)) {
-            $fields['business_no'] = ltrim($fields['business_no'], '0');
-            //@TODO right now its setup with Australia country code make it dynamic later as needed
-            $fields['business_no'] = "61" . $fields['business_no'];
-            //$contactSpaceXML .= "<Work_Phone>" . $fields['business_no'] . "</Work_Phone>";
-            $contactSpaceXML .= "<Mobile_Phone>" . $fields['business_no'] . "</Mobile_Phone>";
-        }
+        
 
         if (array_key_exists('mobilephone', $fields)) {
             $fields['mobilephone'] = ltrim($fields['mobilephone'], '0');
             //@TODO right now its setup with Australia country code make it dynamic later as needed
             $fields['mobilephone'] = "61" . $fields['mobilephone'];
             $contactSpaceXML .= "<Mobile_Phone>" . $fields['mobilephone'] . "</Mobile_Phone>";
+        } elseif (array_key_exists('phone', $fields)) {
+            $fields['phone'] = ltrim($fields['phone'], '0');
+            //@TODO right now its setup with Australia country code make it dynamic later as needed
+            $fields['phone'] = "61" . $fields['phone'];
+            //$contactSpaceXML .= "<Phone>" . $fields['phone'] . "</Phone>";
+            $contactSpaceXML .= "<Mobile_Phone>" . $fields['phone'] . "</Mobile_Phone>";
+        } elseif (array_key_exists('business_no', $fields)) {
+            $fields['business_no'] = ltrim($fields['business_no'], '0');
+            //@TODO right now its setup with Australia country code make it dynamic later as needed
+            $fields['business_no'] = "61" . $fields['business_no'];
+            //$contactSpaceXML .= "<Work_Phone>" . $fields['business_no'] . "</Work_Phone>";
+            $contactSpaceXML .= "<Mobile_Phone>" . $fields['business_no'] . "</Mobile_Phone>";
         }
 
         if (array_key_exists('firstname', $fields))
@@ -535,7 +538,7 @@ $app->group('/contactspace', function () use ($app) {
         $contactSpaceXML .= "</record>";
 
         //post to ContactSpace
-        $contactSpaceSyncResponseArr = $contactSpace->insertRecord($contactSpaceXML);
+        $contactSpaceSyncResponseArr = $contactSpace->insertRecord(urlencode($contactSpaceXML));
 
         //log ContactSpace request and response
         if ($app->log->getEnabled()) {
