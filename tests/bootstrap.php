@@ -17,6 +17,8 @@ class LocalWebTestCase extends WebTestCase {
     public function getSlimInstance() {
         require 'config/hubspot.php';
         require 'config/genius.php';
+        require 'config/contactspace.php';
+
 
         $customConfig = array();
 
@@ -28,6 +30,9 @@ class LocalWebTestCase extends WebTestCase {
         $customConfig['genius'] = array();
         $customConfig['genius']['coplCodes'] = $coplCodes;
         $customConfig['genius']['config'] = $geniusConfig;
+
+        $customConfig['contactspace'] = array();
+        $customConfig['contactspace']['sourceCodes'] = $contactspaceSourceCodes;
 
 
         $app = new \Slim\Slim(array(

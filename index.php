@@ -6,6 +6,7 @@ ini_set('display_errors', 1);
 require 'vendor/autoload.php';
 require 'config/hubspot.php';
 require 'config/genius.php';
+require 'config/contactspace.php';
 
 
 
@@ -27,6 +28,10 @@ $customConfig['hubspot']['dealStatuses'] = $geniusDealStatuses;
 $customConfig['genius'] = array();
 $customConfig['genius']['coplCodes'] = $coplCodes;
 $customConfig['genius']['config'] = $geniusConfig;
+
+
+$customConfig['contactspace'] = array();
+$customConfig['contactspace']['sourceCodes'] = $contactspaceSourceCodes; 
 
 
 $app = new \Slim\Slim(array('log.writer' => $logWriter, 'custom' => $customConfig ));
