@@ -43,7 +43,7 @@ $app->group('/contactspace', function () use ($app) {
 
 
         require_once('app/lib/contactspace.php');
-        $contactSpace = new Custom\Libs\ContactSpace();
+        $contactSpace = new ContactSpace();
 
 
         //get call information from CS
