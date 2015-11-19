@@ -30,6 +30,30 @@ $app->get('/hello/:name', function ($name) use ($app) {
     echo "Hello, $name";
 });
 
+/**
+ * HubSpot Group
+ */
+$app->group('/hubspot', function() use ($app) {
+    /*
+     * Called from HubSpot to synchronize contact on ContactSpace
+     * Receives JSON object in request body
+     */
+    $app->post('/synchronize', function() use ($app) {
+        $entityBody = $app->request->getBody();
+
+        $appConfig = $app->config('custom');
+        $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
+        $contactFields = json_decode($entityBody);
+        $hsResponse = $hubspot->contacts()->create_contact($contactFields);
+
+        if ($app->log->getEnabled()) {
+            $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Contact Request: ' . json_encode($contactFields));
+            $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Contact Response Body: ' . json_encode($hsResponse));
+        }
+        
+        echo json_encode($hsResponse);
+    });
+});
 
 
 
@@ -140,7 +164,7 @@ $app->group('/contactspace', function () use ($app) {
 
         require_once('app/lib/contactspace.php');
         $contactSpace = new ContactSpace();
-        
+
         //post to ContactSpace
         $contactSpaceSyncResponseArr = $contactSpace->insertRecord($entityBody, $app);
 
@@ -516,7 +540,7 @@ $app->group('/genius', function() use ($app) {
                     $key == "loan_purpose" || $key == "approved_loan_amount" || $key == "yes_i_accept" ||
                     $key == "employment_type_" || $key == "credit_status" || $key == "postal_code" ||
                     $key == "home_sts" || $key == "employment_length" || $key == "current_residency_length" ||
-                    $key == "marital_status" || $key == "number_of_children" || $key == "lead_source")
+                    $key == "marital_status" || $key == "number_of_children" || $key == "hear_from")
                 $fields[$key] = $property->value;
         }
 
@@ -612,7 +636,7 @@ $app->group('/genius', function() use ($app) {
                     $key == "email" || $key == "company" || $key == "broker_email" || $key == "gender" ||
                     $key == "address" || $key == "city" || $key == "state" || $key == "current_residency_length" ||
                     $key == "utm" || $key == "totalincome" || $key == "feedback_comments" || $key == "hs_lead_status" ||
-                    $key == "mobilephone" || $key == "private_phone_number" || $key == "suburb" || $key == "lead_source")
+                    $key == "mobilephone" || $key == "private_phone_number" || $key == "suburb" || $key == "hear_from")
                 $fields[$key] = $property->value;
         }
 
@@ -720,10 +744,10 @@ $app->group('/genius', function() use ($app) {
             $fields['property'] = "";
 
 
-        if (!empty($fields['lead_source']))
-            $fields['lead_source'] = $instanceGenius->getCoplCodes('source_statuses', $fields['lead_source'], 'sourcestatus');
+        if (!empty($fields['hear_from']))
+            $fields['hear_from'] = $instanceGenius->getCoplCodes('source_statuses', $fields['hear_from'], 'sourcestatus');
         else
-            $fields['lead_source'] = "";
+            $fields['hear_from'] = "";
 
 
 
@@ -749,7 +773,8 @@ $app->group('/finder', function () use ($app) {
         $form_fields['totalincome'] = $app->request->post("income");
         $form_fields['australian_citizen'] = (strtolower($app->request->post("australian_citizen")) == "yes") ? true : false;
         $form_fields['credit_defaults'] = (strtolower($app->request->post("credit_defaults")) == "yes") ? true : false;
-
+        $form_fields['hs_lead_status'] = "PROSPECT";
+        
         $appConfig = $app->config('custom');
         $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
 

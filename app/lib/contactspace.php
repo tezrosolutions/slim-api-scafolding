@@ -30,14 +30,21 @@ class ContactSpace {
                     $key == "employment_type_" || $key == "credit_status" || $key == "postal_code" ||
                     $key == "home_sts" || $key == "employment_length" || $key == "current_residency_length" ||
                     $key == "marital_status" || $key == "number_of_children" || $key == "mobilephone" ||
-                    $key == "broker_email" || $key == "business_no" || $key == "lead_source")
+                    $key == "broker_email" || $key == "business_no" || $key == "hear_from" || $key == "zip" || 
+                    $key == "contactspace_id")
                 $fields[$key] = $property->value;
         }
-
+        
+        
+        if(isset($fields['contactspace_id'])) {//dup check
+            if ($app->log->getEnabled()) {
+                $app->log->debug('[' . date('H:i:s', time()) . '] ContactSpace Sync Error: Record already exists with ID '.$fields['contactspace_id']);
+            }
+            
+            return array(200, 'ContactSpace Sync Error: Record already exists with ID '.$fields['contactspace_id']);
+        }
 
         //preparing XML to be posted on ContactSpace
-
-
 
         $contactSpaceXML = "<record><Record_ID>" . $fields['vid'] . "</Record_ID>";
 
@@ -89,6 +96,9 @@ class ContactSpace {
 
         if (array_key_exists('postal_code', $fields))
             $contactSpaceXML .= "<Postal_Code>" . $fields['postal_code'] . "</Postal_Code>";
+        
+        if (array_key_exists('zip', $fields))
+            $contactSpaceXML .= "<Postal_Code>" . $fields['zip'] . "</Postal_Code>";
 
         if (array_key_exists('home_sts', $fields))
             $contactSpaceXML .= "<Resident_Status>" . $fields['home_sts'] . "</Resident_Status>";
@@ -108,9 +118,9 @@ class ContactSpace {
         if (array_key_exists('broker_email', $fields))
             $contactSpaceXML .= "<Broker_email>" . $fields['broker_email'] . "</Broker_email>";
 
-        if (array_key_exists('lead_source', $fields)) {
+        if (array_key_exists('hear_from', $fields)) {
             $customConfig = $app->config('custom');
-            $contactSpaceXML .= "<Where_did_you_hear_about_us>" . $customConfig['contactspace']['sourceCodes'][$fields['lead_source']] . "</Where_did_you_hear_about_us>";
+            $contactSpaceXML .= "<Where_did_you_hear_about_us>" . $customConfig['contactspace']['sourceCodes'][$fields['hear_from']] . "</Where_did_you_hear_about_us>";
         }
 
 
@@ -183,6 +193,8 @@ class ContactSpace {
         $body = substr($result, $header_size);
 
         curl_close($ch);
+        
+        print_r($body);exit;
 
 
         return array($info['http_code'], $body);
