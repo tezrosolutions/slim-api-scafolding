@@ -421,6 +421,8 @@ $app->group('/emailleads', function() use ($app) {
                 $_instanceEmailLeads->synchronizeTestEmailLeads($app);
                 break;
         }
+        
+        echo "Cron executed successfully";
     });
 });
 

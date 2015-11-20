@@ -30,45 +30,43 @@ class ContactSpace {
                     $key == "employment_type_" || $key == "credit_status" || $key == "postal_code" ||
                     $key == "home_sts" || $key == "employment_length" || $key == "current_residency_length" ||
                     $key == "marital_status" || $key == "number_of_children" || $key == "mobilephone" ||
-                    $key == "broker_email" || $key == "business_no" || $key == "hear_from" || $key == "zip" || 
+                    $key == "broker_email" || $key == "business_no" || $key == "hear_from" || $key == "zip" ||
                     $key == "contactspace_id")
                 $fields[$key] = $property->value;
         }
-        
-        
-        if(isset($fields['contactspace_id'])) {//dup check
+
+
+        if (isset($fields['contactspace_id'])) {//dup check
             if ($app->log->getEnabled()) {
-                $app->log->debug('[' . date('H:i:s', time()) . '] ContactSpace Sync Error: Record already exists with ID '.$fields['contactspace_id']);
+                $app->log->debug('[' . date('H:i:s', time()) . '] ContactSpace Sync Error: Record already exists with ID ' . $fields['contactspace_id']);
             }
-            
-            return array(200, 'ContactSpace Sync Error: Record already exists with ID '.$fields['contactspace_id']);
+
+            return array(200, 'ContactSpace Sync Error: Record already exists with ID ' . $fields['contactspace_id']);
         }
 
         //preparing XML to be posted on ContactSpace
 
         $contactSpaceXML = "<record><Record_ID>" . $fields['vid'] . "</Record_ID>";
-
-        if (array_key_exists('phone', $fields)) {
-            $fields['phone'] = ltrim($fields['phone'], '0');
-            //@TODO right now its setup with Australia country code make it dynamic later as needed
-            $fields['phone'] = "61" . $fields['phone'];
-            //$contactSpaceXML .= "<Phone>" . $fields['phone'] . "</Phone>";
-            $contactSpaceXML .= "<Mobile_Phone>" . $fields['phone'] . "</Mobile_Phone>";
-        }
-
-        if (array_key_exists('business_no', $fields)) {
-            $fields['business_no'] = ltrim($fields['business_no'], '0');
-            //@TODO right now its setup with Australia country code make it dynamic later as needed
-            $fields['business_no'] = "61" . $fields['business_no'];
-            //$contactSpaceXML .= "<Work_Phone>" . $fields['business_no'] . "</Work_Phone>";
-            $contactSpaceXML .= "<Mobile_Phone>" . $fields['business_no'] . "</Mobile_Phone>";
-        }
-
+        
+        
+        
         if (array_key_exists('mobilephone', $fields)) {
             $fields['mobilephone'] = ltrim($fields['mobilephone'], '0');
             //@TODO right now its setup with Australia country code make it dynamic later as needed
             $fields['mobilephone'] = "61" . $fields['mobilephone'];
             $contactSpaceXML .= "<Mobile_Phone>" . $fields['mobilephone'] . "</Mobile_Phone>";
+        } elseif (array_key_exists('phone', $fields)) {
+            $fields['phone'] = ltrim($fields['phone'], '0');
+            //@TODO right now its setup with Australia country code make it dynamic later as needed
+            $fields['phone'] = "61" . $fields['phone'];
+            //$contactSpaceXML .= "<Phone>" . $fields['phone'] . "</Phone>";
+            $contactSpaceXML .= "<Mobile_Phone>" . $fields['phone'] . "</Mobile_Phone>";
+        } elseif (array_key_exists('business_no', $fields)) {
+            $fields['business_no'] = ltrim($fields['business_no'], '0');
+            //@TODO right now its setup with Australia country code make it dynamic later as needed
+            $fields['business_no'] = "61" . $fields['business_no'];
+            //$contactSpaceXML .= "<Work_Phone>" . $fields['business_no'] . "</Work_Phone>";
+            $contactSpaceXML .= "<Mobile_Phone>" . $fields['business_no'] . "</Mobile_Phone>";
         }
 
         if (array_key_exists('firstname', $fields))
@@ -96,7 +94,7 @@ class ContactSpace {
 
         if (array_key_exists('postal_code', $fields))
             $contactSpaceXML .= "<Postal_Code>" . $fields['postal_code'] . "</Postal_Code>";
-        
+
         if (array_key_exists('zip', $fields))
             $contactSpaceXML .= "<Postal_Code>" . $fields['zip'] . "</Postal_Code>";
 
@@ -158,20 +156,20 @@ class ContactSpace {
         }
 
         $appConfig = $app->config('custom');
-        
-        
-        
+
+
+
         $csResponseBody = simplexml_load_string($body);
-        
-        if(strtolower($csResponseBody->outcome->message) == "success") {//update the ContactSpace 
+
+        if (strtolower($csResponseBody->outcome->message) == "success") {//update the ContactSpace 
             $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
             $hsFields = array();
-            $hsFields['contactspace_id'] = (string)$csResponseBody->outcome->id;
-            
+            $hsFields['contactspace_id'] = (string) $csResponseBody->outcome->id;
+
             $hsUpdateResponse = $hubspot->contacts()->update_contact($fields['vid'], $hsFields);
         }
-        
-        
+
+
         return array($info['http_code'], $body);
     }
 
@@ -193,8 +191,7 @@ class ContactSpace {
         $body = substr($result, $header_size);
 
         curl_close($ch);
-        
-        print_r($body);exit;
+
 
 
         return array($info['http_code'], $body);
