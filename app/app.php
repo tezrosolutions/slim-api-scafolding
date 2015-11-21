@@ -39,11 +39,12 @@ $app->group('/hubspot', function() use ($app) {
      * Receives JSON object in request body
      */
     $app->post('/synchronize', function() use ($app) {
-        $entityBody = $app->request->getBody();
 
+        
         $appConfig = $app->config('custom');
         $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
-        $contactFields = json_decode($entityBody);
+        $contactFields = $app->request->post();
+        
         $hsResponse = $hubspot->contacts()->create_contact($contactFields);
 
         if ($app->log->getEnabled()) {
@@ -61,7 +62,10 @@ $app->group('/hubspot', function() use ($app) {
  * ContactSpace group
  * */
 $app->group('/contactspace', function () use ($app) {
-
+     /*
+     * Called from ContactSpace to synchronize corresponding contact on HubSpot
+     * Receive POST parameters
+     */
     $app->post("/updateHubSpot", function() use ($app) {
         $callID = $app->request->post('CallID');
 
@@ -100,10 +104,7 @@ $app->group('/contactspace', function () use ($app) {
                             $fields['hs_lead_status'] = (string) strtoupper($callInfo->records->record->Lead_status[0]);
                         }
                     }
-                    //@TODO for testing
-                    /* $vid = 76669;
-                      $fields['hs_lead_status'] = "QUALIFIED";
-                      $fields['broker_email'] = "umair@tezrosolutions.com"; */
+                   
 
 
 
@@ -174,7 +175,7 @@ $app->group('/contactspace', function () use ($app) {
 
 
     /*
-     * Called from HubSpot to synchronize contact on ContactSpace
+     * Called from HubSpot to synchronize contact on ContactSpace based on days since settlement date
      * Receives JSON object in request body
      */
     $app->get('/outbound/:months', function($months) use ($app) {
@@ -216,7 +217,7 @@ $app->group('/contactspace', function () use ($app) {
 
 
     /*
-     * Called from HubSpot to synchronize contact on ContactSpace
+     * Called from HubSpot to synchronize old contacts with settlement date on ContactSpace
      * Receives JSON object in request body
      */
     $app->post('/outbound_adhoc', function() use ($app) {

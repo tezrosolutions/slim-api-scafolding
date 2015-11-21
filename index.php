@@ -43,7 +43,9 @@ $app->add(new \Slim\Middleware\HttpBasicAuthentication([
         "root" => "r0Ot_C0n643",
         "genius" => "gEn1u5_C0n",
         "hubspot" => "hUb5p0t_C0n",
-        "contactspace" => "c0nTa9t5Pac3"
+        "contactspace" => "c0nTa9t5Pac3",
+        "apidocs" => "apicdocs123#"
+        
     ]
 ]));
 
