@@ -40,18 +40,107 @@ $app->group('/hubspot', function() use ($app) {
      */
     $app->post('/synchronize', function() use ($app) {
 
-        
+
         $appConfig = $app->config('custom');
+
         $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
         $contactFields = $app->request->post();
-        
+        $contactFields['hubspot_owner_id'] = 4606650; //setting HubSpot owner to Rodney
+
+
+        if (isset($contactFields['originator'])) {//masking Genius status codes
+            if ($contactFields['originator'] == "genius" && isset($contactFields['hs_lead_status'])) {
+                
+                if (array_key_exists($contactFields['hs_lead_status'], $appConfig['hubspot']['dealStatuses'])) {
+                    $contactFields['hs_lead_status'] = $appConfig['hubspot']['dealStatuses'][$contactFields['hs_lead_status']];
+                }
+            }
+        }
+
         $hsResponse = $hubspot->contacts()->create_contact($contactFields);
 
         if ($app->log->getEnabled()) {
             $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Contact Request: ' . json_encode($contactFields));
             $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Contact Response Body: ' . json_encode($hsResponse));
         }
-        
+
+
+        $hubspotData = $hsResponse;
+
+        $fields = array();
+        if (isset($hubspotData->vid)) {
+            $fields['vid'] = $hubspotData->vid;
+
+            //extracting contact information from HubSpot contact create request response.
+            foreach ($hubspotData->properties as $key => $property) {
+                if ($key == "firstname" || $key == "hubspot_owner_id" ||
+                        $key == "loan_purpose" || $key == "approved_loan_amount")
+                    $fields[$key] = $property->value;
+            }
+
+            $dealJSON = '{
+            "associations": {
+                "associatedCompanyIds": [
+                    0
+                ],
+                "associatedVids": [
+                    ' . $fields['vid'] . '
+                ]
+            },
+            "portalId": 62515,
+            "properties": [
+                
+                {
+                    "value": "appointmentscheduled",
+                    "name": "dealstage"
+                },
+                {
+                    "value": "' . $fields['hubspot_owner_id'] . '",
+                    "name": "hubspot_owner_id"
+                },
+                {
+                    "value": "newbusiness",
+                    "name": "dealtype"
+                },
+                {
+                    "value": "new_enquiry",
+                    "name": "deal_status"
+                }';
+
+            if (array_key_exists('firstname', $fields))
+                $dealJSON .= ',{
+                    "value": "' . $fields['firstname'] . '\'s Deal",
+                    "name": "dealname"
+                	}';
+
+
+            if (array_key_exists('approved_loan_amount', $fields))
+                $dealJSON .= ',{
+                    "value": "' . $fields['approved_loan_amount'] . '",
+                    "name": "loan_amount"
+                	}';
+
+            if (array_key_exists('loan_purpose', $fields))
+                $dealJSON .= ',{
+                    "value": "' . $fields['loan_purpose'] . '",
+                    "name": "loan_purpose"
+                	}';
+            $dealJSON .= ']}';
+
+
+            require_once('app/lib/hubspotext.php');
+            $hubspotExt = new Custom\Libs\HubSpotExt();
+            $dealSyncResponseArr = $hubspotExt->insertDeal($dealJSON);
+            $dealResponse = json_decode($dealSyncResponseArr[1]);
+
+
+            if ($app->log->getEnabled()) {
+                $app->log->debug('[' . date('H:i:s', time()) . '] Deal Sync Request: ' . $dealJSON);
+                $app->log->debug('[' . date('H:i:s', time()) . '] Deal Sync Response Body: ' . $dealSyncResponseArr[1]);
+                $app->log->debug('[' . date('H:i:s', time()) . '] Deal Sync Response: ' . $dealSyncResponseArr[0]);
+            }
+        }
+
         echo json_encode($hsResponse);
     });
 });
@@ -62,7 +151,7 @@ $app->group('/hubspot', function() use ($app) {
  * ContactSpace group
  * */
 $app->group('/contactspace', function () use ($app) {
-     /*
+    /*
      * Called from ContactSpace to synchronize corresponding contact on HubSpot
      * Receive POST parameters
      */
@@ -104,7 +193,7 @@ $app->group('/contactspace', function () use ($app) {
                             $fields['hs_lead_status'] = (string) strtoupper($callInfo->records->record->Lead_status[0]);
                         }
                     }
-                   
+
 
 
 
@@ -422,7 +511,7 @@ $app->group('/emailleads', function() use ($app) {
                 $_instanceEmailLeads->synchronizeTestEmailLeads($app);
                 break;
         }
-        
+
         echo "Cron executed successfully";
     });
 });
@@ -459,13 +548,13 @@ $app->group('/genius', function() use ($app) {
         $customConfig = $app->config('custom');
 
         $dealOfInterest = $hubspotExt->getDeal($vid)[1];
-
+        $fields = array();
 
         if (isset(json_decode($dealOfInterest)->associations->associatedVids[0])) {//update lead status and settlement date
             $contactID = json_decode($dealOfInterest)->associations->associatedVids[0];
             $hubspot = new Fungku\HubSpot($customConfig['hubspot']['config']['HUBSPOT_API_KEY']);
 
-            $fields = array();
+            
             if (isset($settlementDate)) {
                 $fields['settlement_dt'] = $settlementDate;
             }
@@ -777,7 +866,7 @@ $app->group('/finder', function () use ($app) {
         $form_fields['australian_citizen'] = (strtolower($app->request->post("australian_citizen")) == "yes") ? true : false;
         $form_fields['credit_defaults'] = (strtolower($app->request->post("credit_defaults")) == "yes") ? true : false;
         $form_fields['hs_lead_status'] = "PROSPECT";
-        
+
         $appConfig = $app->config('custom');
         $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
 
