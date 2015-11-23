@@ -38,7 +38,7 @@ $app->group('/hubspot', function() use ($app) {
      * Called from HubSpot to synchronize contact on ContactSpace
      * Receives JSON object in request body
      */
-    $app->post('/synchronize', function() use ($app) {
+    $app->post('/create', function() use ($app) {
 
 
         $appConfig = $app->config('custom');
