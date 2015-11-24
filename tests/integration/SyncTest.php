@@ -129,14 +129,15 @@ class SyncTest extends LocalWebTestCase {
       //checking if ContactSpace synchronization was done without any problem
       $this->assertSame('200', $this->client->response->body());
       }
-
       public function testHubSpotSynchronize() {
-      $this->client->post('/hubspot/synchronize', array("firstname" => "Testcase", "lastname" => "001", "mobilephone" => "1111111111" , "loan_purpose" =>  "car", "private_phone_number" =>  "1111111111", "business_no" =>  "1111111111", "email" =>  "testcase_004@tezrosolutions.com", "dob"  => "339984000000", "gender"  =>  "Male", "occupation" => "SE", "address"  =>  "21 Hepworth Street", "suburb"  =>  "Arundel", "state"  =>  "QLD", "zip"  =>  "4124", "broker_full_name"  =>  "James Nakhla", "broker_email"  =>  "james@1800approved.com.au", "interest_rate"  =>  "7.00", "approved_loan_amount"  =>  "8000", "term_length"  =>  "12", "settlement_dt"  => "1418342400000", "home_sts"  =>  "Renting", "feedback_comments"  =>  "test", "hear_from"  =>  "google", "hs_lead_status"  =>  "0009", "totalincome"  =>  "1000", "vehicle_make"  => "Toyota", "vehicle_type"  => "Car Insurance", "vehicle_variant"  =>  "4WD", "total_sales_amount"  =>  "0", "dealer_location_name"  =>  "QLD Dealer", "dealer_business_manager_name" =>  "UK", "originator" => "genius"), array('SERVER_NAME' => 'local.dev', 'PHP_AUTH_USER' => 'root', 'PHP_AUTH_PW' => 'r0Ot_C0n643'));
-      $this->assertEquals(200, $this->client->response->status());
-      } */
+        $this->client->post('/hubspot/create', array("firstname" => "Testcase", "lastname" => "001", "mobilephone" => "1111111111", "loan_purpose" => "car", "private_phone_number" => "1111111111", "business_no" => "1111111111", "email" => "testcase_009@tezrosolutions.com", "dob" => "339984000000", "gender" => "Male", "occupation" => "SE", "address" => "21 Hepworth Street", "suburb" => "Arundel", "state" => "QLD", "zip" => "4124", "broker_full_name" => "James Nakhla", "broker_email" => "james@1800approved.com.au", "interest_rate" => "7.00", "approved_loan_amount" => "8000", "term_length" => "12", "settlement_dt" => "1418342400000", "home_sts" => "Renting", "feedback_comments" => "test", "hear_from" => "google", "hs_lead_status" => "0009", "totalincome" => "1000", "vehicle_make" => "Toyota", "vehicle_type" => "Car Insurance", "vehicle_variant" => "4WD", "total_sales_amount" => "0", "dealer_location_name" => "QLD Dealer", "dealer_business_manager_name" => "UK", "originator" => "genius"), array('SERVER_NAME' => 'local.dev', 'PHP_AUTH_USER' => 'root', 'PHP_AUTH_PW' => 'r0Ot_C0n643'));
+        $this->assertEquals(200, $this->client->response->status());
+    }
 
-    public function testGeniusUpdateHubSpot() {
-        $this->client->post('/genius/updateHubSpot', array("gid" => "32823", "vid" => "1439333156", "status" => "0009"), array('SERVER_NAME' => 'local.dev', 'PHP_AUTH_USER' => 'root', 'PHP_AUTH_PW' => 'r0Ot_C0n643'));
+     */
+
+    public function testHubSpotUpdate() {
+        $this->client->post('/hubspot/update', array("vid" => 111903, "dealId" => 13051265, "firstname" => "Testcase", "lastname" => "001", "mobilephone" => "1111111111", "loan_purpose" => "car", "private_phone_number" => "1111111111", "business_no" => "1111111111", "email" => "testcase_009@tezrosolutions.com", "dob" => "339984000000", "gender" => "Male", "occupation" => "SE", "address" => "21 Hepworth Street", "suburb" => "Arundel", "state" => "QLD", "zip" => "4124", "broker_full_name" => "James Nakhla", "broker_email" => "james@1800approved.com.au", "interest_rate" => "7.00", "approved_loan_amount" => "8000", "term_length" => "12", "settlement_dt" => "1418342400000", "home_sts" => "Renting", "feedback_comments" => "test", "hear_from" => "google", "hs_lead_status" => "0009", "totalincome" => "1000", "vehicle_make" => "Toyota", "vehicle_type" => "Car Insurance", "vehicle_variant" => "4WD", "total_sales_amount" => "0", "dealer_location_name" => "QLD Dealer", "dealer_business_manager_name" => "UK", "originator" => "genius"), array('SERVER_NAME' => 'local.dev', 'PHP_AUTH_USER' => 'root', 'PHP_AUTH_PW' => 'r0Ot_C0n643'));
         $this->assertEquals(200, $this->client->response->status());
     }
 

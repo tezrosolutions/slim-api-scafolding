@@ -50,7 +50,7 @@ $app->group('/hubspot', function() use ($app) {
 
         if (isset($contactFields['originator'])) {//masking Genius status codes
             if ($contactFields['originator'] == "genius" && isset($contactFields['hs_lead_status'])) {
-                
+
                 if (array_key_exists($contactFields['hs_lead_status'], $appConfig['hubspot']['dealStatuses'])) {
                     $contactFields['hs_lead_status'] = $appConfig['hubspot']['dealStatuses'][$contactFields['hs_lead_status']];
                 }
@@ -69,6 +69,7 @@ $app->group('/hubspot', function() use ($app) {
 
         $fields = array();
         if (isset($hubspotData->vid)) {
+
             $fields['vid'] = $hubspotData->vid;
 
             //extracting contact information from HubSpot contact create request response.
@@ -133,6 +134,8 @@ $app->group('/hubspot', function() use ($app) {
             $dealSyncResponseArr = $hubspotExt->insertDeal($dealJSON);
             $dealResponse = json_decode($dealSyncResponseArr[1]);
 
+            $hsResponse->dealId = $dealResponse->dealId;
+
 
             if ($app->log->getEnabled()) {
                 $app->log->debug('[' . date('H:i:s', time()) . '] Deal Sync Request: ' . $dealJSON);
@@ -142,6 +145,109 @@ $app->group('/hubspot', function() use ($app) {
         }
 
         echo json_encode($hsResponse);
+    });
+
+
+    /*
+     * Called from HubSpot to synchronize contact on ContactSpace
+     * Receives JSON object in request body
+     */
+    $app->post('/update', function() use ($app) {
+        $appConfig = $app->config('custom');
+
+        require_once('app/lib/hubspotext.php');
+        $hubspotExt = new Custom\Libs\HubSpotExt();
+
+        $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
+        $contactFields = $app->request->post();
+
+
+
+
+
+
+        if (!isset($contactFields['vid'])) {
+            echo '{"status":"error","message":"Update failed. vid is required."}';
+        } else {
+            $dealId = $contactFields['dealId'];
+            unset($contactFields['dealId']);
+            
+            $vid = $contactFields['vid'];
+            unset($contactFields['vid']);
+            
+            $contactFields['hubspot_owner_id'] = 4606650; //setting HubSpot owner to Rodney
+            if (isset($contactFields['originator'])) {//masking Genius status codes
+                if ($contactFields['originator'] == "genius") {
+                    if (isset($contactFields['hs_lead_status'])) {
+                        if (array_key_exists($contactFields['hs_lead_status'], $appConfig['hubspot']['dealStatuses'])) {
+                            $contactFields['hs_lead_status'] = $appConfig['hubspot']['dealStatuses'][$contactFields['hs_lead_status']];
+                        }
+                    }
+                }
+            }
+            $hsResponse = $hubspot->contacts()->update_contact($vid, $contactFields);
+
+            if ($app->log->getEnabled()) {
+                $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Contact Update Request: ' . json_encode($contactFields));
+                $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Contact Update Response Body: ' . json_encode($hsResponse));
+            }
+
+
+
+            $fields = array();
+            if (isset($dealId)) {
+                
+                $dealFields = array();
+
+                //extracting contact information from HubSpot contact create request response.
+                foreach ($contactFields as $key => $value) {
+                    if ($key == "firstname" || $key == "hubspot_owner_id" ||
+                            $key == "loan_purpose" || $key == "approved_loan_amount" || $key == "hs_lead_status") {
+                        $property = new stdClass();
+                        switch ($key) {
+                            case 'firstname':
+                                $property->name = "dealname";
+                                $property->value = $contactFields[$key] . "'s Deal";
+                                break;
+                            case 'approved_loan_amount':
+                                $property->name = "loan_amount";
+                                $property->value = $contactFields[$key];
+                                break;
+                            case 'loan_purpose':
+                                $property->name = "loan_purpose";
+                                $property->value = $contactFields[$key];
+                                break;
+                            case 'hubspot_owner_id':
+                                $property->name = "hubspot_owner_id";
+                                $property->value = $contactFields[$key];
+                                break;
+                            case 'hs_lead_status':
+                                $property->name = "deal_status";
+                                $property->value = $contactFields[$key];
+                                break;
+                        }
+                        $dealFields[] = $property;
+                    }
+                }
+
+
+                $dealPropertiesObj = new stdClass();
+                $dealPropertiesObj->properties = $dealFields;
+
+
+
+                $dealGetResponseArr = $hubspotExt->updateDeal($dealId, json_encode($dealPropertiesObj));
+                $dealResponse = json_decode($dealGetResponseArr[1]);
+
+                if ($app->log->getEnabled()) {
+                    $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Request Body: ' . json_encode($dealPropertiesObj));
+                    $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Response Body: ' . $dealGetResponseArr[1]);
+                    $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Response Status: ' . $dealGetResponseArr[0]);
+                }
+            }
+
+            echo json_encode($hsResponse);
+        }
     });
 });
 
@@ -554,7 +660,7 @@ $app->group('/genius', function() use ($app) {
             $contactID = json_decode($dealOfInterest)->associations->associatedVids[0];
             $hubspot = new Fungku\HubSpot($customConfig['hubspot']['config']['HUBSPOT_API_KEY']);
 
-            
+
             if (isset($settlementDate)) {
                 $fields['settlement_dt'] = $settlementDate;
             }
@@ -775,8 +881,12 @@ $app->group('/genius', function() use ($app) {
 
         if (isset($fields['private_phone_number']))
             $fields['coplPh'] = "<PhHome>" . $fields['private_phone_number'] . "</PhHome>";
-        else
-            $fields['coplPh'] = "<PhHome></PhHome>";
+        else {
+            if (isset($fields['phone']))
+                $fields['coplPh'] = "<PhHome>" . $fields['phone'] . "</PhHome>";
+            else
+                $fields['coplPh'] = "<PhHome></PhHome>";
+        }
 
         if (isset($fields['mobilephone']))
             $fields['coplMob'] = "<Mobile>" . $fields['mobilephone'] . "</Mobile>";
