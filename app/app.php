@@ -60,11 +60,13 @@ $app->group('/hubspot', function() use ($app) {
                     }
 
                     if (isset($contactFields['dob'])) {
-                        $contactFields['dob'] = strtotime($contactFields['dob']);
+                        $contactFields['dob'] = str_replace('/', '-', $contactFields['dob']);
+                        $contactFields['dob'] = strtotime($contactFields['dob']) * 1000;
                     }
-                    
+
                     if (isset($contactFields['settlement_dt'])) {
-                        $contactFields['settlement_dt'] = strtotime($contactFields['settlement_dt']);
+                        $contactFields['settlement_dt'] = str_replace('/', '-', $contactFields['settlement_dt']);
+                        $contactFields['settlement_dt'] = strtotime($contactFields['settlement_dt']) * 1000;
                     }
                 }
             }
@@ -77,7 +79,20 @@ $app->group('/hubspot', function() use ($app) {
             }
 
 
-            $hubspotData = $hsResponse;
+
+            if (isset($hsResponse->status)) {
+                if ($hsResponse->status == "error") {
+                    if ($hsResponse->message == "Contact already exists") {
+                        $vid = $hsResponse->identityProfile->vid;
+                        $hubspotData = $hubspot->contacts()->get_contact_by_id($vid);
+                        $hsResponse = new stdClass();
+                        $hsResponse->vid = $vid;
+                        $hsResponse->message = "Contact already exists. A new deal was created for existing contact.";
+                    }
+                }
+            } else {
+                $hubspotData = $hsResponse;
+            }
 
             $fields = array();
             if (isset($hubspotData->vid)) {
@@ -156,6 +171,11 @@ $app->group('/hubspot', function() use ($app) {
                 }
             }
 
+            if ($app->log->getEnabled()) {
+                $app->log->debug('[' . date('H:i:s', time()) . '] Response body: ' . json_encode($hsResponse));
+            }
+
+
             echo json_encode($hsResponse);
         }
     });
@@ -182,7 +202,7 @@ $app->group('/hubspot', function() use ($app) {
         if (!isset($contactFields['vid'])) {
             echo '{"status":"error","message":"vid is required."}';
         } else {
-            if (isset($dealId)) {
+            if (isset($contactFields['dealId'])) {
                 $dealId = $contactFields['dealId'];
                 unset($contactFields['dealId']);
             }
@@ -191,7 +211,7 @@ $app->group('/hubspot', function() use ($app) {
             unset($contactFields['vid']);
 
             $contactFields['hubspot_owner_id'] = 4606650; //setting HubSpot owner to Rodney
-            
+
             if (isset($contactFields['originator'])) {//masking Genius status codes
                 if ($contactFields['originator'] == "genius") {
                     if (isset($contactFields['hs_lead_status'])) {
@@ -201,11 +221,13 @@ $app->group('/hubspot', function() use ($app) {
                     }
 
                     if (isset($contactFields['dob'])) {
-                        $contactFields['dob'] = strtotime($contactFields['dob']);
+                        $contactFields['dob'] = str_replace('/', '-', $contactFields['dob']);
+                        $contactFields['dob'] = strtotime($contactFields['dob']) * 1000;
                     }
-                    
+
                     if (isset($contactFields['settlement_dt'])) {
-                        $contactFields['settlement_dt'] = strtotime($contactFields['settlement_dt']);
+                        $contactFields['settlement_dt'] = str_replace('/', '-', $contactFields['settlement_dt']);
+                        $contactFields['settlement_dt'] = strtotime($contactFields['settlement_dt']) * 1000;
                     }
                 }
             }
@@ -270,6 +292,7 @@ $app->group('/hubspot', function() use ($app) {
                     $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Response Status: ' . $dealGetResponseArr[0]);
                 }
             }
+
 
             echo json_encode($hsResponse);
         }
