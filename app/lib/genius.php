@@ -53,7 +53,6 @@ class Genius {
       <Surname>" . (isset($fields['lastname']) ? $fields['lastname'] : "") . "</Surname>
       <Gender>" . (isset($fields['gender']) ? strtolower($fields['gender']) : "") . "</Gender>
       " . $fields['coplArea'] . "
-      " . $fields['coplPh'] . "
       " . $fields['coplMob'] . "
       <EmailAddress>" . (isset($fields['email']) ? $fields['email'] : "") . "</EmailAddress>
       <UnitNo>" . (isset($fields['unitno']) ? $fields['unitno'] : "") . "</UnitNo>

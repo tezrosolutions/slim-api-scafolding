@@ -927,19 +927,15 @@ $app->group('/genius', function() use ($app) {
 
         $fields['coplArea'] = "<PhHomeAreaCode></PhHomeAreaCode>";
 
-        if (isset($fields['private_phone_number']))
-            $fields['coplPh'] = "<PhHome>" . $fields['private_phone_number'] . "</PhHome>";
-        else {
-            if (isset($fields['phone']))
-                $fields['coplPh'] = "<PhHome>" . $fields['phone'] . "</PhHome>";
-            else
-                $fields['coplPh'] = "<PhHome></PhHome>";
-        }
-
-        if (isset($fields['mobilephone']))
+        if (isset($fields['private_phone_number'])) {
+            $fields['coplMob'] = "<Mobile>" . $fields['private_phone_number'] . "</Mobile>";
+        } elseif (isset($fields['phone'])) {
+            $fields['coplMob'] = "<Mobile>" . $fields['phone'] . "</Mobile>";
+        } elseif (isset($fields['mobilephone'])) {
             $fields['coplMob'] = "<Mobile>" . $fields['mobilephone'] . "</Mobile>";
-        else
+        } else {
             $fields['coplMob'] = "<Mobile></Mobile>";
+        }
 
 
         if (empty($fields['dob'])) {
