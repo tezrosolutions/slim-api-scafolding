@@ -92,9 +92,6 @@ class ContactSpace {
         if (array_key_exists('credit_status', $fields))
             $contactSpaceXML .= "<Credit_Status>" . $fields['credit_status'] . "</Credit_Status>";
 
-        if (array_key_exists('postal_code', $fields))
-            $contactSpaceXML .= "<Postal_Code>" . $fields['postal_code'] . "</Postal_Code>";
-
         if (array_key_exists('zip', $fields))
             $contactSpaceXML .= "<Postal_Code>" . $fields['zip'] . "</Postal_Code>";
 

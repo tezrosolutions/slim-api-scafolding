@@ -45,41 +45,53 @@ $app->group('/hubspot', function() use ($app) {
 
         $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
         $contactFields = $app->request->post();
-        $contactFields['hubspot_owner_id'] = 4606650; //setting HubSpot owner to Rodney
+        if (!isset($contactFields['email']) || !isset($contactFields['firstname']) || !isset($contactFields['originator'])) {
+            echo '{"status":"error","message":"Required fields are missing."}';
+        } else {
+            $contactFields['hubspot_owner_id'] = 4606650; //setting HubSpot owner to Rodney
 
 
-        if (isset($contactFields['originator'])) {//masking Genius status codes
-            if ($contactFields['originator'] == "genius" && isset($contactFields['hs_lead_status'])) {
+            if (isset($contactFields['originator'])) {//masking Genius status codes
+                if ($contactFields['originator'] == "genius") {
+                    if (isset($contactFields['hs_lead_status'])) {
+                        if (array_key_exists($contactFields['hs_lead_status'], $appConfig['hubspot']['dealStatuses'])) {
+                            $contactFields['hs_lead_status'] = $appConfig['hubspot']['dealStatuses'][$contactFields['hs_lead_status']];
+                        }
+                    }
 
-                if (array_key_exists($contactFields['hs_lead_status'], $appConfig['hubspot']['dealStatuses'])) {
-                    $contactFields['hs_lead_status'] = $appConfig['hubspot']['dealStatuses'][$contactFields['hs_lead_status']];
+                    if (isset($contactFields['dob'])) {
+                        $contactFields['dob'] = strtotime($contactFields['dob']);
+                    }
+                    
+                    if (isset($contactFields['settlement_dt'])) {
+                        $contactFields['settlement_dt'] = strtotime($contactFields['settlement_dt']);
+                    }
                 }
             }
-        }
 
-        $hsResponse = $hubspot->contacts()->create_contact($contactFields);
+            $hsResponse = $hubspot->contacts()->create_contact($contactFields);
 
-        if ($app->log->getEnabled()) {
-            $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Contact Request: ' . json_encode($contactFields));
-            $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Contact Response Body: ' . json_encode($hsResponse));
-        }
-
-
-        $hubspotData = $hsResponse;
-
-        $fields = array();
-        if (isset($hubspotData->vid)) {
-
-            $fields['vid'] = $hubspotData->vid;
-
-            //extracting contact information from HubSpot contact create request response.
-            foreach ($hubspotData->properties as $key => $property) {
-                if ($key == "firstname" || $key == "hubspot_owner_id" ||
-                        $key == "loan_purpose" || $key == "approved_loan_amount")
-                    $fields[$key] = $property->value;
+            if ($app->log->getEnabled()) {
+                $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Contact Update Request: ' . json_encode($contactFields));
+                $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Contact Update Response Body: ' . json_encode($hsResponse));
             }
 
-            $dealJSON = '{
+
+            $hubspotData = $hsResponse;
+
+            $fields = array();
+            if (isset($hubspotData->vid)) {
+
+                $fields['vid'] = $hubspotData->vid;
+
+                //extracting contact information from HubSpot contact create request response.
+                foreach ($hubspotData->properties as $key => $property) {
+                    if ($key == "firstname" || $key == "hubspot_owner_id" ||
+                            $key == "loan_purpose" || $key == "approved_loan_amount")
+                        $fields[$key] = $property->value;
+                }
+
+                $dealJSON = '{
             "associations": {
                 "associatedCompanyIds": [
                     0
@@ -108,43 +120,44 @@ $app->group('/hubspot', function() use ($app) {
                     "name": "deal_status"
                 }';
 
-            if (array_key_exists('firstname', $fields))
-                $dealJSON .= ',{
+                if (array_key_exists('firstname', $fields))
+                    $dealJSON .= ',{
                     "value": "' . $fields['firstname'] . '\'s Deal",
                     "name": "dealname"
                 	}';
 
 
-            if (array_key_exists('approved_loan_amount', $fields))
-                $dealJSON .= ',{
+                if (array_key_exists('approved_loan_amount', $fields))
+                    $dealJSON .= ',{
                     "value": "' . $fields['approved_loan_amount'] . '",
                     "name": "loan_amount"
                 	}';
 
-            if (array_key_exists('loan_purpose', $fields))
-                $dealJSON .= ',{
+                if (array_key_exists('loan_purpose', $fields))
+                    $dealJSON .= ',{
                     "value": "' . $fields['loan_purpose'] . '",
                     "name": "loan_purpose"
                 	}';
-            $dealJSON .= ']}';
+                $dealJSON .= ']}';
 
 
-            require_once('app/lib/hubspotext.php');
-            $hubspotExt = new Custom\Libs\HubSpotExt();
-            $dealSyncResponseArr = $hubspotExt->insertDeal($dealJSON);
-            $dealResponse = json_decode($dealSyncResponseArr[1]);
+                require_once('app/lib/hubspotext.php');
+                $hubspotExt = new Custom\Libs\HubSpotExt();
+                $dealSyncResponseArr = $hubspotExt->insertDeal($dealJSON);
+                $dealResponse = json_decode($dealSyncResponseArr[1]);
 
-            $hsResponse->dealId = $dealResponse->dealId;
+                $hsResponse->dealId = $dealResponse->dealId;
 
 
-            if ($app->log->getEnabled()) {
-                $app->log->debug('[' . date('H:i:s', time()) . '] Deal Sync Request: ' . $dealJSON);
-                $app->log->debug('[' . date('H:i:s', time()) . '] Deal Sync Response Body: ' . $dealSyncResponseArr[1]);
-                $app->log->debug('[' . date('H:i:s', time()) . '] Deal Sync Response: ' . $dealSyncResponseArr[0]);
+                if ($app->log->getEnabled()) {
+                    $app->log->debug('[' . date('H:i:s', time()) . '] Deal Update Request: ' . $dealJSON);
+                    $app->log->debug('[' . date('H:i:s', time()) . '] Deal Update Response Body: ' . $dealSyncResponseArr[1]);
+                    $app->log->debug('[' . date('H:i:s', time()) . '] Deal Update Response: ' . $dealSyncResponseArr[0]);
+                }
             }
-        }
 
-        echo json_encode($hsResponse);
+            echo json_encode($hsResponse);
+        }
     });
 
 
@@ -167,15 +180,18 @@ $app->group('/hubspot', function() use ($app) {
 
 
         if (!isset($contactFields['vid'])) {
-            echo '{"status":"error","message":"Update failed. vid is required."}';
+            echo '{"status":"error","message":"vid is required."}';
         } else {
-            $dealId = $contactFields['dealId'];
-            unset($contactFields['dealId']);
-            
+            if (isset($dealId)) {
+                $dealId = $contactFields['dealId'];
+                unset($contactFields['dealId']);
+            }
+
             $vid = $contactFields['vid'];
             unset($contactFields['vid']);
-            
+
             $contactFields['hubspot_owner_id'] = 4606650; //setting HubSpot owner to Rodney
+            
             if (isset($contactFields['originator'])) {//masking Genius status codes
                 if ($contactFields['originator'] == "genius") {
                     if (isset($contactFields['hs_lead_status'])) {
@@ -183,8 +199,17 @@ $app->group('/hubspot', function() use ($app) {
                             $contactFields['hs_lead_status'] = $appConfig['hubspot']['dealStatuses'][$contactFields['hs_lead_status']];
                         }
                     }
+
+                    if (isset($contactFields['dob'])) {
+                        $contactFields['dob'] = strtotime($contactFields['dob']);
+                    }
+                    
+                    if (isset($contactFields['settlement_dt'])) {
+                        $contactFields['settlement_dt'] = strtotime($contactFields['settlement_dt']);
+                    }
                 }
             }
+
             $hsResponse = $hubspot->contacts()->update_contact($vid, $contactFields);
 
             if ($app->log->getEnabled()) {
@@ -196,7 +221,7 @@ $app->group('/hubspot', function() use ($app) {
 
             $fields = array();
             if (isset($dealId)) {
-                
+
                 $dealFields = array();
 
                 //extracting contact information from HubSpot contact create request response.
@@ -383,22 +408,22 @@ $app->group('/contactspace', function () use ($app) {
         if ($months) {
             switch ($months) {
                 case '1':
-                    $contactSpace->_datasetID = 15;
+                    $contactSpace->_datasetID = 50;
                     break;
                 case '6':
-                    $contactSpace->_datasetID = 16;
+                    $contactSpace->_datasetID = 39;
                     break;
                 case '11':
-                    $contactSpace->_datasetID = 17;
+                    $contactSpace->_datasetID = 40;
                     break;
                 case '18':
-                    $contactSpace->_datasetID = 18;
+                    $contactSpace->_datasetID = 42;
                     break;
                 case '23':
-                    $contactSpace->_datasetID = 19;
+                    $contactSpace->_datasetID = 43;
                     break;
                 case '36':
-                    $contactSpace->_datasetID = 20;
+                    $contactSpace->_datasetID = 44;
                     break;
             }
         }
@@ -445,17 +470,17 @@ $app->group('/contactspace', function () use ($app) {
             $daysSinceSettlemt = floor($timeSinceSettlement / (60 * 60 * 24));
 
             if ($daysSinceSettlemt >= 30 && $daysSinceSettlemt < 180) {
-                $contactSpace->_datasetID = 15;
+                $contactSpace->_datasetID = 50;
             } else if ($daysSinceSettlemt >= 180 && $daysSinceSettlemt < 330) {
-                $contactSpace->_datasetID = 16;
+                $contactSpace->_datasetID = 39;
             } else if ($daysSinceSettlemt >= 330 && $daysSinceSettlemt < 540) {
-                $contactSpace->_datasetID = 17;
+                $contactSpace->_datasetID = 40;
             } else if ($daysSinceSettlemt >= 540 && $daysSinceSettlemt < 690) {
-                $contactSpace->_datasetID = 18;
+                $contactSpace->_datasetID = 42;
             } else if ($daysSinceSettlemt >= 690 && $daysSinceSettlemt < 1080) {
-                $contactSpace->_datasetID = 19;
+                $contactSpace->_datasetID = 43;
             } else if ($daysSinceSettlemt >= 1080) {
-                $contactSpace->_datasetID = 20;
+                $contactSpace->_datasetID = 44;
             }
 
             if ($app->log->getEnabled()) {
