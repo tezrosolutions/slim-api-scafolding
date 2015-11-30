@@ -431,22 +431,22 @@ $app->group('/contactspace', function () use ($app) {
         if ($months) {
             switch ($months) {
                 case '1':
-                    $contactSpace->_datasetID = 50;
+                    $contactSpace->_datasetID = 59;
                     break;
                 case '6':
-                    $contactSpace->_datasetID = 39;
+                    $contactSpace->_datasetID = 60;
                     break;
                 case '11':
-                    $contactSpace->_datasetID = 40;
+                    $contactSpace->_datasetID = 61;
                     break;
                 case '18':
-                    $contactSpace->_datasetID = 42;
+                    $contactSpace->_datasetID = 62;
                     break;
                 case '23':
-                    $contactSpace->_datasetID = 43;
+                    $contactSpace->_datasetID = 63;
                     break;
                 case '36':
-                    $contactSpace->_datasetID = 44;
+                    $contactSpace->_datasetID = 64;
                     break;
             }
         }
@@ -493,17 +493,17 @@ $app->group('/contactspace', function () use ($app) {
             $daysSinceSettlemt = floor($timeSinceSettlement / (60 * 60 * 24));
 
             if ($daysSinceSettlemt >= 30 && $daysSinceSettlemt < 180) {
-                $contactSpace->_datasetID = 50;
+                $contactSpace->_datasetID = 59;
             } else if ($daysSinceSettlemt >= 180 && $daysSinceSettlemt < 330) {
-                $contactSpace->_datasetID = 39;
+                $contactSpace->_datasetID = 60;
             } else if ($daysSinceSettlemt >= 330 && $daysSinceSettlemt < 540) {
-                $contactSpace->_datasetID = 40;
+                $contactSpace->_datasetID = 61;
             } else if ($daysSinceSettlemt >= 540 && $daysSinceSettlemt < 690) {
-                $contactSpace->_datasetID = 42;
+                $contactSpace->_datasetID = 62;
             } else if ($daysSinceSettlemt >= 690 && $daysSinceSettlemt < 1080) {
-                $contactSpace->_datasetID = 43;
+                $contactSpace->_datasetID = 63;
             } else if ($daysSinceSettlemt >= 1080) {
-                $contactSpace->_datasetID = 44;
+                $contactSpace->_datasetID = 64;
             }
 
             if ($app->log->getEnabled()) {
@@ -514,7 +514,7 @@ $app->group('/contactspace', function () use ($app) {
 
 
         //post to ContactSpace
-        $contactSpaceSyncResponseArr = $contactSpace->insertRecord($entityBody, $app);
+        $contactSpaceSyncResponseArr = $contactSpace->insertRecord($entityBody, $app, false);
 
         echo $contactSpaceSyncResponseArr[0];
     });

@@ -17,7 +17,7 @@ class ContactSpace {
         
     }
 
-    public function insertRecord($entityBody, $app) {
+    public function insertRecord($entityBody, $app, $checkDup = true) {
         $hubspotData = json_decode($entityBody);
 
         $fields = array();
@@ -31,49 +31,50 @@ class ContactSpace {
                     $key == "home_sts" || $key == "employment_length" || $key == "current_residency_length" ||
                     $key == "marital_status" || $key == "number_of_children" || $key == "mobilephone" ||
                     $key == "broker_email" || $key == "business_no" || $key == "hear_from" || $key == "zip" ||
-                    $key == "contactspace_id" || $key == "interest_rate" || $key == "settlement_dt" || 
+                    $key == "contactspace_id" || $key == "interest_rate" || $key == "settlement_dt" ||
                     $key == "vehicle_make" || $key == "vehicle_variant" || $key == "broker_full_name" ||
                     $key == "bankers")
                 $fields[$key] = $property->value;
         }
 
+        if ($checkDup) {
+            if (isset($fields['contactspace_id'])) {//dup check
+                if ($app->log->getEnabled()) {
+                    $app->log->debug('[' . date('H:i:s', time()) . '] ContactSpace Sync Error: Record already exists with ID ' . $fields['contactspace_id']);
+                }
 
-        if (isset($fields['contactspace_id'])) {//dup check
-            if ($app->log->getEnabled()) {
-                $app->log->debug('[' . date('H:i:s', time()) . '] ContactSpace Sync Error: Record already exists with ID ' . $fields['contactspace_id']);
+                return array(200, 'ContactSpace Sync Error: Record already exists with ID ' . $fields['contactspace_id']);
             }
-
-            return array(200, 'ContactSpace Sync Error: Record already exists with ID ' . $fields['contactspace_id']);
         }
 
         //preparing XML to be posted on ContactSpace
 
         $contactSpaceXML = "<record><Record_ID>" . $fields['vid'] . "</Record_ID>";
-        
-        if(array_key_exists('interest_rate', $fields)) {
-            $contactSpaceXML .= "<Interest_Rate>".$fields['interest_rate']."</Interest_Rate>";
+
+        if (array_key_exists('interest_rate', $fields)) {
+            $contactSpaceXML .= "<Interest_Rate>" . $fields['interest_rate'] . "</Interest_Rate>";
         }
-        
-        if(array_key_exists('settlement_dt', $fields)) {
-            $contactSpaceXML .= "<Settlement_Date>".$fields['settlement_dt']."</Settlement_Date>";
+
+        if (array_key_exists('settlement_dt', $fields)) {
+            $contactSpaceXML .= "<Settlement_Date>" . date("d-m-Y", ($fields['settlement_dt']) / 1000) . "</Settlement_Date>";
         }
-        
-        if(array_key_exists('vehicle_make', $fields)) {
-            $contactSpaceXML .= "<Vehicle_Make>".$fields['vehicle_make']."</Vehicle_Make>";
+
+        if (array_key_exists('vehicle_make', $fields)) {
+            $contactSpaceXML .= "<Vehicle_Make>" . $fields['vehicle_make'] . "</Vehicle_Make>";
         }
-        
-        if(array_key_exists('vehicle_variant', $fields)) {
-            $contactSpaceXML .= "<Vehicle_Variant>".$fields['vehicle_variant']."</Vehicle_Variant>";
+
+        if (array_key_exists('vehicle_variant', $fields)) {
+            $contactSpaceXML .= "<Vehicle_Variant>" . $fields['vehicle_variant'] . "</Vehicle_Variant>";
         }
-        
-        if(array_key_exists('broker_full_name', $fields)) {
-            $contactSpaceXML .= "<Assign_to_Broker>".$fields['broker_full_name']."</Assign_to_Broker>";
+
+        if (array_key_exists('broker_full_name', $fields)) {
+            $contactSpaceXML .= "<Assign_to_Broker>" . $fields['broker_full_name'] . "</Assign_to_Broker>";
         }
-        
-        if(array_key_exists('bankers', $fields)) {
-            $contactSpaceXML .= "<Banker>".$fields['broker_full_name']."</Banker>";
+
+        if (array_key_exists('bankers', $fields)) {
+            $contactSpaceXML .= "<Banker>" . $fields['broker_full_name'] . "</Banker>";
         }
-        
+
         if (array_key_exists('mobilephone', $fields)) {
             $fields['mobilephone'] = ltrim($fields['mobilephone'], '0');
             //@TODO right now its setup with Australia country code make it dynamic later as needed
