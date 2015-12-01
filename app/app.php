@@ -71,6 +71,9 @@ $app->group('/hubspot', function() use ($app) {
                 }
             }
 
+
+            $contactFields['gender'] = ucfirst($contactFields['gender']);
+
             $hsResponse = $hubspot->contacts()->create_contact($contactFields);
 
             if ($app->log->getEnabled()) {
@@ -231,6 +234,8 @@ $app->group('/hubspot', function() use ($app) {
                     }
                 }
             }
+
+            $contactFields['gender'] = ucfirst($contactFields['gender']);
 
             $hsResponse = $hubspot->contacts()->update_contact($vid, $contactFields);
 
@@ -431,22 +436,22 @@ $app->group('/contactspace', function () use ($app) {
         if ($months) {
             switch ($months) {
                 case '1':
-                    $contactSpace->_datasetID = 59;
+                    $contactSpace->_datasetID = 70;
                     break;
                 case '6':
-                    $contactSpace->_datasetID = 60;
+                    $contactSpace->_datasetID = 71;
                     break;
                 case '11':
-                    $contactSpace->_datasetID = 61;
+                    $contactSpace->_datasetID = 72;
                     break;
                 case '18':
-                    $contactSpace->_datasetID = 62;
+                    $contactSpace->_datasetID = 73;
                     break;
                 case '23':
-                    $contactSpace->_datasetID = 63;
+                    $contactSpace->_datasetID = 74;
                     break;
                 case '36':
-                    $contactSpace->_datasetID = 64;
+                    $contactSpace->_datasetID = 75;
                     break;
             }
         }
@@ -493,17 +498,17 @@ $app->group('/contactspace', function () use ($app) {
             $daysSinceSettlemt = floor($timeSinceSettlement / (60 * 60 * 24));
 
             if ($daysSinceSettlemt >= 30 && $daysSinceSettlemt < 180) {
-                $contactSpace->_datasetID = 59;
+                $contactSpace->_datasetID = 70;
             } else if ($daysSinceSettlemt >= 180 && $daysSinceSettlemt < 330) {
-                $contactSpace->_datasetID = 60;
+                $contactSpace->_datasetID = 71;
             } else if ($daysSinceSettlemt >= 330 && $daysSinceSettlemt < 540) {
-                $contactSpace->_datasetID = 61;
+                $contactSpace->_datasetID = 72;
             } else if ($daysSinceSettlemt >= 540 && $daysSinceSettlemt < 690) {
-                $contactSpace->_datasetID = 62;
+                $contactSpace->_datasetID = 73;
             } else if ($daysSinceSettlemt >= 690 && $daysSinceSettlemt < 1080) {
-                $contactSpace->_datasetID = 63;
+                $contactSpace->_datasetID = 74;
             } else if ($daysSinceSettlemt >= 1080) {
-                $contactSpace->_datasetID = 64;
+                $contactSpace->_datasetID = 75;
             }
 
             if ($app->log->getEnabled()) {
