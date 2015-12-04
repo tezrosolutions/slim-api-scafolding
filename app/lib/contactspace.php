@@ -138,9 +138,16 @@ class ContactSpace {
         if (array_key_exists('broker_email', $fields))
             $contactSpaceXML .= "<Broker_email>" . $fields['broker_email'] . "</Broker_email>";
 
+
+
         if (array_key_exists('hear_from', $fields)) {
             $customConfig = $app->config('custom');
-            $contactSpaceXML .= "<Where_did_you_hear_about_us>" . $customConfig['contactspace']['sourceCodes'][$fields['hear_from']] . "</Where_did_you_hear_about_us>";
+
+            if (isset($customConfig['contactspace']['sourceCodes'][$fields['hear_from']])) {
+                $contactSpaceXML .= "<Where_did_you_hear_about_us>" . $customConfig['contactspace']['sourceCodes'][$fields['hear_from']] . "</Where_did_you_hear_about_us>";
+            } else {
+                $contactSpaceXML .= "<Where_did_you_hear_about_us>other</Where_did_you_hear_about_us>";
+            }
         }
 
 
