@@ -49,7 +49,7 @@ $app->group('/hubspot', function() use ($app) {
             echo '{"status":"error","message":"Required fields are missing."}';
         } else {
             $contactFields['hubspot_owner_id'] = 4606650; //setting HubSpot owner to Rodney
-
+                
 
             if (isset($contactFields['originator'])) {//masking Genius status codes
                 if ($contactFields['originator'] == "genius") {
@@ -73,6 +73,7 @@ $app->group('/hubspot', function() use ($app) {
 
 
             $contactFields['gender'] = ucfirst($contactFields['gender']);
+            $contactFields['state'] = strtoupper($contactFields['state']);
 
             $hsResponse = $hubspot->contacts()->create_contact($contactFields);
 
