@@ -284,8 +284,8 @@ class EmailLeads {
                 }
                 /*                 * *** DELETE EMAILS **** */
 
-                imap_delete($inbox, $email_number, $messageUid);
-                imap_expunge($inbox);
+                /*imap_delete($inbox, $email_number, $messageUid);
+                imap_expunge($inbox);*/
             }
         }
 
@@ -480,8 +480,8 @@ class EmailLeads {
                 }
                 /*                 * *** DELETE EMAILS **** */
 
-                imap_delete($inbox, $email_number, $messageUid);
-                imap_expunge($inbox);
+                /*imap_delete($inbox, $email_number, $messageUid);
+                imap_expunge($inbox);*/
             }
         }
 

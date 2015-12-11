@@ -105,6 +105,10 @@ $app->group('/hubspot', function() use ($app) {
                 $contactFields['state'] = strtoupper($contactFields['state']);
             }
 
+            if (isset($contactFields['loan_purpose'])) {
+                $contactFields['loan_purpose'] = str_replace(" ", "_", strtolower($contactFields['loan_purpose']));
+            }
+
             $hsResponse = $hubspot->contacts()->create_contact($contactFields);
 
             if ($app->log->getEnabled()) {
@@ -293,8 +297,10 @@ $app->group('/hubspot', function() use ($app) {
                 if (isset($contactFields['gender'])) {
                     $contactFields['gender'] = ucfirst($contactFields['gender']);
                 }
-                
-                
+
+                if (isset($contactFields['loan_purpose'])) {
+                    $contactFields['loan_purpose'] = str_replace(" ", "_", strtolower($contactFields['loan_purpose']));
+                }
 
                 $hsResponse = $hubspot->contacts()->update_contact($vid, $contactFields);
 
