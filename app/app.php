@@ -34,6 +34,32 @@ $app->get('/hello/:name', function ($name) use ($app) {
  * HubSpot Group
  */
 $app->group('/hubspot', function() use ($app) {
+    /**
+     * Returns contact Profile
+     */
+    $app->get('/contact/dealID/:dealID/profile', function($dealID) use ($app) {
+        $customConfig = $app->config('custom');
+
+        require_once('app/lib/hubspotext.php');
+        $hubspotExt = new Custom\Libs\HubSpotExt();
+        $dealOfInterest = $hubspotExt->getDeal($dealID)[1];
+        $fields = array();
+
+        if (isset(json_decode($dealOfInterest)->associations->associatedVids[0])) {//update lead status and settlement date
+            $contactID = json_decode($dealOfInterest)->associations->associatedVids[0];
+            $hubspot = new Fungku\HubSpot($customConfig['hubspot']['config']['HUBSPOT_API_KEY']);
+
+            $hsContact = $hubspot->contacts()->get_contact_by_id($contactID);
+            if (isset($hsContact->vid)) {
+                echo json_encode($hsContact);
+            } else
+                echo '{"status": "error", "message": "No contact associated with thids deal."}';
+        } else {
+            echo '{"status": "error", "message": "Deal not found."}';
+        }
+    });
+
+
     /*
      * Called from HubSpot to synchronize contact on ContactSpace
      * Receives JSON object in request body
@@ -49,7 +75,7 @@ $app->group('/hubspot', function() use ($app) {
             echo '{"status":"error","message":"Required fields are missing."}';
         } else {
             $contactFields['hubspot_owner_id'] = 4606650; //setting HubSpot owner to Rodney
-                
+
 
             if (isset($contactFields['originator'])) {//masking Genius status codes
                 if ($contactFields['originator'] == "genius") {
@@ -71,9 +97,13 @@ $app->group('/hubspot', function() use ($app) {
                 }
             }
 
+            if (isset($contactFields['gender'])) {
+                $contactFields['gender'] = ucfirst($contactFields['gender']);
+            }
 
-            $contactFields['gender'] = ucfirst($contactFields['gender']);
-            $contactFields['state'] = strtoupper($contactFields['state']);
+            if (isset($contactFields['state'])) {
+                $contactFields['state'] = strtoupper($contactFields['state']);
+            }
 
             $hsResponse = $hubspot->contacts()->create_contact($contactFields);
 
@@ -139,20 +169,19 @@ $app->group('/hubspot', function() use ($app) {
                     "name": "deal_status"
                 }';
 
-                if (array_key_exists('firstname', $fields))
+                if (isset($fields['firstname']))
                     $dealJSON .= ',{
                     "value": "' . $fields['firstname'] . '\'s Deal",
                     "name": "dealname"
                 	}';
 
-
-                if (array_key_exists('approved_loan_amount', $fields))
+                if (isset($fields['approved_loan_amount']))
                     $dealJSON .= ',{
                     "value": "' . $fields['approved_loan_amount'] . '",
                     "name": "loan_amount"
                 	}';
 
-                if (array_key_exists('loan_purpose', $fields))
+                if (isset($fields['loan_purpose']))
                     $dealJSON .= ',{
                     "value": "' . $fields['loan_purpose'] . '",
                     "name": "loan_purpose"
@@ -164,6 +193,7 @@ $app->group('/hubspot', function() use ($app) {
                 $hubspotExt = new Custom\Libs\HubSpotExt();
                 $dealSyncResponseArr = $hubspotExt->insertDeal($dealJSON);
                 $dealResponse = json_decode($dealSyncResponseArr[1]);
+
 
                 $hsResponse->dealId = $dealResponse->dealId;
 
@@ -203,48 +233,76 @@ $app->group('/hubspot', function() use ($app) {
 
 
 
-        if (!isset($contactFields['vid'])) {
-            echo '{"status":"error","message":"vid is required."}';
+        if (!isset($contactFields['dealId'])) {
+            echo '{"status":"error","message":"dealId is required."}';
         } else {
             if (isset($contactFields['dealId'])) {
                 $dealId = $contactFields['dealId'];
                 unset($contactFields['dealId']);
             }
 
-            $vid = $contactFields['vid'];
-            unset($contactFields['vid']);
+            if (isset($contactFields['vid'])) {
+                $vid = $contactFields['vid'];
+                unset($contactFields['vid']);
+            } else {
+                require_once('app/lib/hubspotext.php');
+                $hubspotExt = new Custom\Libs\HubSpotExt();
+                $dealOfInterest = $hubspotExt->getDeal($dealId)[1];
+                $fields = array();
 
-            $contactFields['hubspot_owner_id'] = 4606650; //setting HubSpot owner to Rodney
+                if (isset(json_decode($dealOfInterest)->associations->associatedVids[0])) {//update lead status and settlement date
+                    $contactID = json_decode($dealOfInterest)->associations->associatedVids[0];
+                    $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
 
-            if (isset($contactFields['originator'])) {//masking Genius status codes
-                if ($contactFields['originator'] == "genius") {
-                    if (isset($contactFields['hs_lead_status'])) {
-                        if (array_key_exists($contactFields['hs_lead_status'], $appConfig['hubspot']['dealStatuses'])) {
-                            $contactFields['hs_lead_status'] = $appConfig['hubspot']['dealStatuses'][$contactFields['hs_lead_status']];
+                    $hsContact = $hubspot->contacts()->get_contact_by_id($contactID);
+                    if (isset($hsContact->vid)) {
+                        $vid = $hsContact->vid;
+                    } else {
+                        if ($app->log->getEnabled()) {
+                            $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Error: No contact associated with thiss deal.');
                         }
                     }
-
-                    if (isset($contactFields['dob'])) {
-                        $contactFields['dob'] = str_replace('/', '-', $contactFields['dob']);
-                        $contactFields['dob'] = strtotime($contactFields['dob']) * 1000;
-                    }
-
-                    if (isset($contactFields['settlement_dt'])) {
-                        $contactFields['settlement_dt'] = str_replace('/', '-', $contactFields['settlement_dt']);
-                        $contactFields['settlement_dt'] = strtotime($contactFields['settlement_dt']) * 1000;
-                    }
+                } else {
+                    $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Error: Deal not found.');
                 }
             }
 
-            $contactFields['gender'] = ucfirst($contactFields['gender']);
+            if (isset($vid)) {
+                $contactFields['hubspot_owner_id'] = 4606650; //setting HubSpot owner to Rodney
 
-            $hsResponse = $hubspot->contacts()->update_contact($vid, $contactFields);
+                if (isset($contactFields['originator'])) {//masking Genius status codes
+                    if ($contactFields['originator'] == "genius") {
+                        if (isset($contactFields['hs_lead_status'])) {
+                            if (array_key_exists($contactFields['hs_lead_status'], $appConfig['hubspot']['dealStatuses'])) {
+                                $contactFields['hs_lead_status'] = $appConfig['hubspot']['dealStatuses'][$contactFields['hs_lead_status']];
+                            }
+                        }
 
-            if ($app->log->getEnabled()) {
-                $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Contact Update Request: ' . json_encode($contactFields));
-                $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Contact Update Response Body: ' . json_encode($hsResponse));
+                        if (isset($contactFields['dob'])) {
+                            $contactFields['dob'] = str_replace('/', '-', $contactFields['dob']);
+                            $contactFields['dob'] = strtotime($contactFields['dob']) * 1000;
+                        }
+
+                        if (isset($contactFields['settlement_dt'])) {
+                            $contactFields['settlement_dt'] = str_replace('/', '-', $contactFields['settlement_dt']);
+                            $contactFields['settlement_dt'] = strtotime($contactFields['settlement_dt']) * 1000;
+                        }
+                    }
+                }
+
+                if (isset($contactFields['gender'])) {
+                    $contactFields['gender'] = ucfirst($contactFields['gender']);
+                }
+                
+                
+
+                $hsResponse = $hubspot->contacts()->update_contact($vid, $contactFields);
+
+                if ($app->log->getEnabled()) {
+                    $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Contact Update Request: ' . json_encode($contactFields));
+                    $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Contact Update Response Body: ' . json_encode($hsResponse));
+                }
             }
-
 
 
             $fields = array();
@@ -259,33 +317,47 @@ $app->group('/hubspot', function() use ($app) {
                         $property = new stdClass();
                         switch ($key) {
                             case 'firstname':
-                                $property->name = "dealname";
-                                $property->value = $contactFields[$key] . "'s Deal";
+                                if (isset($contactFields[$key])) {
+                                    $property->name = "dealname";
+                                    $property->value = $contactFields[$key] . "'s Deal";
+                                }
                                 break;
                             case 'approved_loan_amount':
-                                $property->name = "loan_amount";
-                                $property->value = $contactFields[$key];
+                                if (isset($contactFields[$key])) {
+                                    $property->name = "loan_amount";
+                                    $property->value = $contactFields[$key];
+                                }
                                 break;
                             case 'loan_purpose':
-                                $property->name = "loan_purpose";
-                                $property->value = $contactFields[$key];
+                                if (isset($contactFields[$key])) {
+                                    $property->name = "loan_purpose";
+                                    $property->value = $contactFields[$key];
+                                }
                                 break;
                             case 'hubspot_owner_id':
-                                $property->name = "hubspot_owner_id";
-                                $property->value = $contactFields[$key];
+                                if (isset($contactFields[$key])) {
+                                    $property->name = "hubspot_owner_id";
+                                    $property->value = $contactFields[$key];
+                                }
                                 break;
                             case 'hs_lead_status':
-                                $property->name = "deal_status";
-                                $property->value = $contactFields[$key];
+                                if (isset($contactFields[$key])) {
+                                    $property->name = "deal_status";
+                                    $property->value = $contactFields[$key];
+                                }
                                 break;
                         }
-                        $dealFields[] = $property;
+                        if (isset($contactFields[$key])) {
+                            $dealFields[] = $property;
+                        }
                     }
                 }
 
 
                 $dealPropertiesObj = new stdClass();
                 $dealPropertiesObj->properties = $dealFields;
+
+
 
 
 
