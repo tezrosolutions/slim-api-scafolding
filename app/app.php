@@ -955,6 +955,7 @@ $app->group('/genius', function() use ($app) {
 
         $fields = array();
         $fields['ID'] = $deal->dealId;
+        $fields['vid'] = $hubspotData->vid;
 
         //extracting contact information from HubSpot
         foreach ($hubspotData->properties as $key => $property) {
@@ -966,7 +967,8 @@ $app->group('/genius', function() use ($app) {
                     $key == "email" || $key == "company" || $key == "broker_email" || $key == "gender" ||
                     $key == "address" || $key == "city" || $key == "state" || $key == "current_residency_length" ||
                     $key == "utm" || $key == "totalincome" || $key == "feedback_comments" || $key == "hs_lead_status" ||
-                    $key == "mobilephone" || $key == "private_phone_number" || $key == "suburb" || $key == "hear_from")
+                    $key == "mobilephone" || $key == "private_phone_number" || $key == "suburb" || $key == "hear_from" ||
+                    $key = "term_length")
                 $fields[$key] = $property->value;
         }
 

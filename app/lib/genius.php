@@ -39,6 +39,7 @@ class Genius {
    <AccessCode>" . (isset($fields['accessCode']) ? $fields['accessCode'] : "") . "</AccessCode>
    <AccessPwd>" . (isset($fields['accessPass']) ? $fields['accessPass'] : "") . "</AccessPwd>
    <ID>" . (isset($fields['ID']) ? $fields['ID'] : "") . "</ID>
+   <ContactID>". (isset($fields['vid']) ? $fields['vid'] : "") ."</ContactID>
    <FormType>" . (isset($fields['leads_type']) ? $fields['leads_type'] : "") . "</FormType>
    <ABN>" . (isset($fields['abn']) ? $fields['abn'] : "") . "</ABN>
    <BusinessType>" . (isset($fields['leads_businesstype']) ? $fields['leads_businesstype'] : "") . "</BusinessType>
@@ -87,6 +88,7 @@ class Genius {
       <Comments>" . (isset($fields['feedback_comments']) ? $fields['feedback_comments'] : "") . "</Comments>
       <LeadStatus>" . (isset($fields['hs_lead_status']) ? $fields['hs_lead_status'] : "") . "</LeadStatus>
       <AppSource>" . (isset($fields['lead_source']) ? $fields['lead_source'] : "") . "</AppSource>
+      <Term>" . (isset($fields['term_length'])) ? $fields['term_length'] : "" . "</Term>
    </LeadData>
 </Lead>";
 
