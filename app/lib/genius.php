@@ -88,10 +88,9 @@ class Genius {
       <Comments>" . (isset($fields['feedback_comments']) ? $fields['feedback_comments'] : "") . "</Comments>
       <LeadStatus>" . (isset($fields['hs_lead_status']) ? $fields['hs_lead_status'] : "") . "</LeadStatus>
       <AppSource>" . (isset($fields['lead_source']) ? $fields['lead_source'] : "") . "</AppSource>
-      <Term>" . (isset($fields['term_length'])) ? $fields['term_length'] : "" . "</Term>
+      <Term>" . (isset($fields['term_length']) ? $fields['term_length'] : "") . "</Term>
    </LeadData>
 </Lead>";
-
 
         $appConfig = $this->_appInstance->config('custom');
         $ch = curl_init();

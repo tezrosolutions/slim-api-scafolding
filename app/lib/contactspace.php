@@ -33,7 +33,7 @@ class ContactSpace {
                     $key == "broker_email" || $key == "business_no" || $key == "hear_from" || $key == "zip" ||
                     $key == "contactspace_id" || $key == "interest_rate" || $key == "settlement_dt" ||
                     $key == "vehicle_make" || $key == "vehicle_variant" || $key == "broker_full_name" ||
-                    $key == "bankers")
+                    $key == "bankers" || $key == "createdate")
                 $fields[$key] = $property->value;
         }
 
@@ -149,12 +149,21 @@ class ContactSpace {
                 $contactSpaceXML .= "<Where_did_you_hear_about_us>other</Where_did_you_hear_about_us>";
             }
         }
+        
+        if (array_key_exists('createdate', $fields)) {
+            $createTimeStamp = $fields['createdate']/1000;
+            $fields['createdate'] = gmdate("Y-m-d H:i:s", $createTimeStamp);
+            $contactSpaceXML .= "<UploadTime>" . $fields['createdate'] . "</UploadTime>";
+        }
+        
+
+        
 
 
         $contactSpaceXML .= "</record>";
 
 
-
+       
 
 
 
