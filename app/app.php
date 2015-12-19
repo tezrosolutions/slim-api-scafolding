@@ -140,9 +140,17 @@ $app->group('/hubspot', function() use ($app) {
                 //extracting contact information from HubSpot contact create request response.
                 foreach ($hubspotData->properties as $key => $property) {
                     if ($key == "firstname" || $key == "hubspot_owner_id" ||
-                            $key == "loan_purpose" || $key == "approved_loan_amount")
+                            $key == "loan_purpose" || $key == "approved_loan_amount" ||
+                            $key == "settlement_dt" || $key == "total_sales_amount" ||
+                            $key == "hs_lead_status")
                         $fields[$key] = $property->value;
                 }
+
+                if (!isset($fields['hubspot_owner_id'])) {
+                    $fields['hubspot_owner_id'] = 4606650;
+                }
+
+
 
                 $dealJSON = '{
             "associations": {
@@ -167,10 +175,6 @@ $app->group('/hubspot', function() use ($app) {
                 {
                     "value": "newbusiness",
                     "name": "dealtype"
-                },
-                {
-                    "value": "new_enquiry",
-                    "name": "deal_status"
                 }';
 
                 if (isset($fields['firstname']))
@@ -190,6 +194,25 @@ $app->group('/hubspot', function() use ($app) {
                     "value": "' . $fields['loan_purpose'] . '",
                     "name": "loan_purpose"
                 	}';
+
+                if (isset($fields['hs_lead_status']))
+                    $dealJSON .= ',{
+                    "value": "' . $fields['hs_lead_status'] . '",
+                    "name": "deal_status"
+                	}';
+
+                if (isset($fields['total_sales_amount']))
+                    $dealJSON .= ',{
+                    "value": "' . $fields['total_sales_amount'] . '",
+                    "name": "amount"
+                	}';
+
+                if (isset($fields['settlement_dt']))
+                    $dealJSON .= ',{
+                    "value": "' . $fields['settlement_dt'] . '",
+                    "name": "closedate"
+                	}';
+
                 $dealJSON .= ']}';
 
 
@@ -318,8 +341,11 @@ $app->group('/hubspot', function() use ($app) {
 
                 //extracting contact information from HubSpot contact create request response.
                 foreach ($contactFields as $key => $value) {
-                    if ($key == "firstname" || $key == "hubspot_owner_id" ||
-                            $key == "loan_purpose" || $key == "approved_loan_amount" || $key == "hs_lead_status") {
+                   
+                    if ( $key == "firstname" || $key == "hubspot_owner_id" ||
+                            $key == "loan_purpose" || $key == "approved_loan_amount" ||
+                            $key == "settlement_dt" || $key == "total_sales_amount" ||
+                            $key == "hs_lead_status") {
                         $property = new stdClass();
                         switch ($key) {
                             case 'firstname':
@@ -349,6 +375,18 @@ $app->group('/hubspot', function() use ($app) {
                             case 'hs_lead_status':
                                 if (isset($contactFields[$key])) {
                                     $property->name = "deal_status";
+                                    $property->value = $contactFields[$key];
+                                }
+                                break;
+                            case 'settlement_dt':
+                                if (isset($contactFields[$key])) {
+                                    $property->name = "closedate";
+                                    $property->value = $contactFields[$key];
+                                }
+                                break;
+                            case 'total_sales_amount':
+                                if (isset($contactFields[$key])) {
+                                    $property->name = "amount";
                                     $property->value = $contactFields[$key];
                                 }
                                 break;
@@ -863,8 +901,8 @@ $app->group('/genius', function() use ($app) {
 
         $fields = array();
         $fields['vid'] = $hubspotData->vid;
-        
-        
+
+
         //extracting contact information from HubSpot
         foreach ($hubspotData->properties as $key => $property) {
             if ($key == "lastname" || $key == "phone" || $key == "firstname" || $key == "hubspot_owner_id" ||
