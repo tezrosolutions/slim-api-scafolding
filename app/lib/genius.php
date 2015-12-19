@@ -89,6 +89,8 @@ class Genius {
       <LeadStatus>" . (isset($fields['hs_lead_status']) ? $fields['hs_lead_status'] : "") . "</LeadStatus>
       <AppSource>" . (isset($fields['lead_source']) ? $fields['lead_source'] : "") . "</AppSource>
       <Term>" . (isset($fields['term_length']) ? $fields['term_length'] : "") . "</Term>
+      <BusinessNoAreaCode>".(isset($fields['businessNoAreaCode'])? $fields['businessNoAreaCode'] : "")."</BusinessNoAreaCode>  
+      <BusinessNo>".(isset($fields['businessNo'])? $fields['businessNo'] : "")."</BusinessNo>
    </LeadData>
 </Lead>";
 

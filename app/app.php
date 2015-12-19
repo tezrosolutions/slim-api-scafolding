@@ -1056,6 +1056,20 @@ $app->group('/genius', function() use ($app) {
 
 
         $fields['coplArea'] = "<PhHomeAreaCode></PhHomeAreaCode>";
+        
+        if(isset($fields['business_no'])) {
+            if(strlen($fields['business_no']) == 10) {
+                $validAreaCodes = array("02", "03", "07", "08", "04");
+                
+                $fields['businessNoAreaCode'] = substr($fields['business_no'], 0, 2);
+                
+                if(!in_array($fields['businessNoAreaCode'], $validAreaCodes)) {
+                    unset($fields['businessNoAreaCode']);
+                }
+                
+                $fields['businessNo'] = substr($fields['business_no'], 2, 8);
+            }
+        }
 
         if (isset($fields['private_phone_number'])) {
             $fields['coplMob'] = "<Mobile>" . $fields['private_phone_number'] . "</Mobile>";
