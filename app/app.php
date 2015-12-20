@@ -909,7 +909,8 @@ $app->group('/genius', function() use ($app) {
                     $key == "loan_purpose" || $key == "approved_loan_amount" || $key == "yes_i_accept" ||
                     $key == "employment_type_" || $key == "credit_status" || $key == "postal_code" ||
                     $key == "home_sts" || $key == "employment_length" || $key == "current_residency_length" ||
-                    $key == "marital_status" || $key == "number_of_children" || $key == "hear_from" || $key == "term_length") {
+                    $key == "marital_status" || $key == "number_of_children" || $key == "hear_from" || 
+                    $key == "term_length" || $key == "business_no") {
                 $fields[$key] = $property->value;
             }
         }
@@ -1009,16 +1010,18 @@ $app->group('/genius', function() use ($app) {
                     $key == "address" || $key == "city" || $key == "state" || $key == "current_residency_length" ||
                     $key == "utm" || $key == "totalincome" || $key == "feedback_comments" || $key == "hs_lead_status" ||
                     $key == "mobilephone" || $key == "private_phone_number" || $key == "suburb" || $key == "hear_from" ||
-                    $key == "term_length") {
+                    $key == "term_length" || $key == "business_no") {
                 $fields[$key] = $property->value;
             }
         }
+        
+        
 
 
 
 
         //@TODO Remove JUST USE FOR TESTING
-        //$fields['broker_email'] = "umair@tezrosolutions.com";
+        $fields['broker_email'] = "umair@tezrosolutions.com";
 
         $fields['leads_type'] = "QuickQuote";
         $fields['accessCode'] = "money3";
