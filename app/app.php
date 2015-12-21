@@ -1021,7 +1021,7 @@ $app->group('/genius', function() use ($app) {
 
 
         //@TODO Remove JUST USE FOR TESTING
-        $fields['broker_email'] = "umair@tezrosolutions.com";
+        //$fields['broker_email'] = "umair@tezrosolutions.com";
 
         $fields['leads_type'] = "QuickQuote";
         $fields['accessCode'] = "money3";
@@ -1141,6 +1141,15 @@ $app->group('/genius', function() use ($app) {
             $fields['hear_from'] = $instanceGenius->getCoplCodes('source_statuses', $fields['hear_from'], 'sourcestatus');
         else
             $fields['hear_from'] = "";
+        
+        
+        if(!empty($fields['totalincome'])) {
+            if(!is_numeric($fields['totalincome'])) {
+                $fields['totalincome'] = "";
+            }
+        } else {
+           $fields['totalincome'] = ""; 
+        }
 
 
 

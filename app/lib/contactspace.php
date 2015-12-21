@@ -56,7 +56,8 @@ class ContactSpace {
         }
 
         if (array_key_exists('settlement_dt', $fields)) {
-            $contactSpaceXML .= "<Settlement_Date>" . date("d-m-Y", ($fields['settlement_dt']) / 1000) . "</Settlement_Date>";
+            if(($fields['settlement_dt']) != 0)
+                $contactSpaceXML .= "<Settlement_Date>" . date("d-m-Y", ($fields['settlement_dt']) / 1000) . "</Settlement_Date>";
         }
 
         if (array_key_exists('vehicle_make', $fields)) {
@@ -153,7 +154,7 @@ class ContactSpace {
         if (array_key_exists('createdate', $fields)) {
             $createTimeStamp = $fields['createdate']/1000;
             $fields['createdate'] = gmdate("Y-m-d H:i:s", $createTimeStamp);
-            $contactSpaceXML .= "<UploadTime>" . $fields['createdate'] . "</UploadTime>";
+            $contactSpaceXML .= "<UploadedTime>" . $fields['createdate'] . "</UploadedTime>";
         }
         
 
