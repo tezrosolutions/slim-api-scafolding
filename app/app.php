@@ -98,7 +98,17 @@ $app->group('/hubspot', function() use ($app) {
             }
 
             if (isset($contactFields['gender'])) {
-                $contactFields['gender'] = ucfirst($contactFields['gender']);
+                $contactFields['gender'] = strtolower($contactFields['gender']);
+                
+                switch($contactFields['gender']) {
+                    case 'm':
+                        $contactFields['gender'] = "male";
+                        break;
+                    case 'f':
+                        $contactFields['gender'] = "female";
+                        break;
+                }
+           
             }
 
             if (isset($contactFields['state'])) {
