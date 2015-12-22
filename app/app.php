@@ -98,17 +98,7 @@ $app->group('/hubspot', function() use ($app) {
             }
 
             if (isset($contactFields['gender'])) {
-                $contactFields['gender'] = strtolower($contactFields['gender']);
-                
-                switch($contactFields['gender']) {
-                    case 'm':
-                        $contactFields['gender'] = "male";
-                        break;
-                    case 'f':
-                        $contactFields['gender'] = "female";
-                        break;
-                }
-           
+                $contactFields['gender'] = ucfirst($contactFields['gender']);
             }
 
             if (isset($contactFields['state'])) {
@@ -351,8 +341,8 @@ $app->group('/hubspot', function() use ($app) {
 
                 //extracting contact information from HubSpot contact create request response.
                 foreach ($contactFields as $key => $value) {
-                   
-                    if ( $key == "firstname" || $key == "hubspot_owner_id" ||
+
+                    if ($key == "firstname" || $key == "hubspot_owner_id" ||
                             $key == "loan_purpose" || $key == "approved_loan_amount" ||
                             $key == "settlement_dt" || $key == "total_sales_amount" ||
                             $key == "hs_lead_status") {
@@ -919,7 +909,7 @@ $app->group('/genius', function() use ($app) {
                     $key == "loan_purpose" || $key == "approved_loan_amount" || $key == "yes_i_accept" ||
                     $key == "employment_type_" || $key == "credit_status" || $key == "postal_code" ||
                     $key == "home_sts" || $key == "employment_length" || $key == "current_residency_length" ||
-                    $key == "marital_status" || $key == "number_of_children" || $key == "hear_from" || 
+                    $key == "marital_status" || $key == "number_of_children" || $key == "hear_from" ||
                     $key == "term_length" || $key == "business_no") {
                 $fields[$key] = $property->value;
             }
@@ -1024,8 +1014,8 @@ $app->group('/genius', function() use ($app) {
                 $fields[$key] = $property->value;
             }
         }
-        
-        
+
+
 
 
 
@@ -1069,17 +1059,17 @@ $app->group('/genius', function() use ($app) {
 
 
         $fields['coplArea'] = "<PhHomeAreaCode></PhHomeAreaCode>";
-        
-        if(isset($fields['business_no'])) {
-            if(strlen($fields['business_no']) == 10) {
+
+        if (isset($fields['business_no'])) {
+            if (strlen($fields['business_no']) == 10) {
                 $validAreaCodes = array("02", "03", "07", "08", "04");
-                
+
                 $fields['businessNoAreaCode'] = substr($fields['business_no'], 0, 2);
-                
-                if(!in_array($fields['businessNoAreaCode'], $validAreaCodes)) {
+
+                if (!in_array($fields['businessNoAreaCode'], $validAreaCodes)) {
                     unset($fields['businessNoAreaCode']);
                 }
-                
+
                 $fields['businessNo'] = substr($fields['business_no'], 2, 8);
             }
         }
@@ -1151,17 +1141,27 @@ $app->group('/genius', function() use ($app) {
             $fields['hear_from'] = $instanceGenius->getCoplCodes('source_statuses', $fields['hear_from'], 'sourcestatus');
         else
             $fields['hear_from'] = "";
-        
-        
-        if(!empty($fields['totalincome'])) {
-            if(!is_numeric($fields['totalincome'])) {
+
+
+        if (!empty($fields['totalincome'])) {
+            if (!is_numeric($fields['totalincome'])) {
                 $fields['totalincome'] = "";
             }
         } else {
-           $fields['totalincome'] = ""; 
+            $fields['totalincome'] = "";
         }
 
-
+        if (!empty($fields['gender'])) {
+             
+            switch (strtolower($fields['gender'])) {
+                case 'm':
+                    $fields['gender'] = "male";
+                    break;
+                case 'f':
+                    $fields['gender'] = "female";
+                    break;
+            }
+        }
 
         echo $instanceGenius->post($fields)[0];
     });
