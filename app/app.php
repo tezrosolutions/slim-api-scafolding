@@ -910,9 +910,17 @@ $app->group('/genius', function() use ($app) {
                     $key == "employment_type_" || $key == "credit_status" || $key == "postal_code" ||
                     $key == "home_sts" || $key == "employment_length" || $key == "current_residency_length" ||
                     $key == "marital_status" || $key == "number_of_children" || $key == "hear_from" ||
-                    $key == "term_length" || $key == "business_no") {
+                    $key == "term_length" || $key == "business_no" || $key == "broker_email") {
                 $fields[$key] = $property->value;
             }
+        }
+        
+        
+        $invalidEmails = array("", "unemployed@1800approved.com.au", "unemployedqld@1800approved.com.au", "bankrupt@1800approved.com.au", "bankruptqld@1800approved.com.au");
+        
+        if(in_array($fields['broker_email'], $invalidEmails)) {
+            echo "500";
+            return;
         }
 
 
@@ -1014,7 +1022,8 @@ $app->group('/genius', function() use ($app) {
                 $fields[$key] = $property->value;
             }
         }
-
+        
+        
 
 
 
