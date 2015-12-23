@@ -227,7 +227,9 @@ $jsonLoan_type = '{
 	{"code": "other", "desc": "personal"},
 	{"code": "other", "desc": "cashflow"},
 	{"code": "other", "desc": "businessloan"},
-	{"code": "other", "desc": "other"}
+	{"code": "other", "desc": "other"},
+        {"code": "other", "desc": "personal_loan"},
+        {"code": "other", "desc": "truck_and_equipments"}
   ]
 }';
 
