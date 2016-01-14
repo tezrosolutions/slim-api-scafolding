@@ -53,7 +53,7 @@ $app->group('/hubspot', function() use ($app) {
             if (isset($hsContact->vid)) {
                 echo json_encode($hsContact);
             } else
-                echo '{"status": "error", "message": "No contact associated with thids deal."}';
+                echo '{"status": "error", "message": "No contact associated with this deal."}';
         } else {
             echo '{"status": "error", "message": "Deal not found."}';
         }
@@ -1132,6 +1132,8 @@ $app->group('/genius', function() use ($app) {
             $fields['leads_finance_type'] = $instanceGenius->getCoplCodes('loan_types', $fields['loan_purpose'], 'loantype'); //required
         else
             $fields['leads_finance_type'] = "other";
+        
+        
 
 
         if (!empty($fields['employment_type_']))

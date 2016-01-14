@@ -206,6 +206,7 @@ $jsonStreet_code = '{
 
 $jsonLoan_type = '{
   "loantype":[
+        {"code": "auto", "desc": "auto"},
   	{"code": "auto", "desc": "car"},
 	{"code": "auto", "desc": "motorbike"},
 	{"code": "other", "desc": "boat"},
@@ -229,7 +230,11 @@ $jsonLoan_type = '{
 	{"code": "other", "desc": "businessloan"},
 	{"code": "other", "desc": "other"},
         {"code": "other", "desc": "personal_loan"},
-        {"code": "other", "desc": "truck_and_equipments"}
+        {"code": "other", "desc": "truck_and_equipments"},
+        {"code": "other", "desc": "van"},
+        {"code": "other", "desc": "ute"},
+        {"code": "other", "desc": "motorhome"},
+        {"code": "other", "desc": "motorhome"}
   ]
 }';
 
