@@ -1282,3 +1282,47 @@ $app->group('/field', function () use ($app) {
     });
 });
 
+
+/**
+ * Fields group
+ * */
+$app->group('/misc', function () use ($app) {
+
+    $app->get("/post_broker_email_field", function() use ($app) {
+
+        $appConfig = $app->config('custom');
+
+        $fieldParams = $app->request->get();
+        $url = "http://api.hubapi.com/contacts/v2/properties/named/broker_email?portalId=" . $appConfig['hubspot']['config']['HUBSPOT_PORTAL_ID'] . "&hapikey=" . $appConfig['hubspot']['config']['HUBSPOT_API_KEY'];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        $response = curl_exec($ch);
+        curl_close($ch);
+
+        $options = json_decode($response)->options;
+        
+        file_put_contents(__DIR__."/../files/broker_emails.js", 'test('.json_encode($options).')');
+
+        $url = "http://api.hubapi.com/filemanager/api/v2/files?overwrite=true&hapikey=" . $appConfig['hubspot']['config']['HUBSPOT_API_KEY'];
+        $header = array('Content-Type: multipart/form-data');
+        $fields = array("folder_paths" => "proxy", 'files' => "@".__DIR__."/../files/broker_emails.js;type=text/plain");
+
+        $ch = "";
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
+        $file_upload_result = curl_exec($ch);
+        curl_close($ch);
+        //print json_encode($fields);echo "<br>";
+        
+        echo $file_upload_result;
+        
+    });
+});
+
