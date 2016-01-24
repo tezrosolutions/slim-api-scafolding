@@ -66,7 +66,6 @@ $app->group('/hubspot', function() use ($app) {
      */
     $app->post('/create', function() use ($app) {
 
-
         $appConfig = $app->config('custom');
 
         $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
@@ -108,6 +107,8 @@ $app->group('/hubspot', function() use ($app) {
             if (isset($contactFields['loan_purpose'])) {
                 $contactFields['loan_purpose'] = str_replace(" ", "_", strtolower($contactFields['loan_purpose']));
             }
+
+
 
             $hsResponse = $hubspot->contacts()->create_contact($contactFields);
 
@@ -163,11 +164,6 @@ $app->group('/hubspot', function() use ($app) {
             },
             "portalId": 62515,
             "properties": [
-                
-                {
-                    "value": "appointmentscheduled",
-                    "name": "dealstage"
-                },
                 {
                     "value": "' . $fields['hubspot_owner_id'] . '",
                     "name": "hubspot_owner_id"
@@ -195,11 +191,19 @@ $app->group('/hubspot', function() use ($app) {
                     "name": "loan_purpose"
                 	}';
 
-                if (isset($fields['hs_lead_status']))
+                if (isset($fields['hs_lead_status'])) {
                     $dealJSON .= ',{
                     "value": "' . $fields['hs_lead_status'] . '",
                     "name": "deal_status"
                 	}';
+
+                    if (isset($appConfig['hubspot']['dealStages'][$fields['hs_lead_status']])) {
+                        $dealJSON .= ',{
+                    "value": "' . $appConfig['hubspot']['dealStages'][$fields['hs_lead_status']] . '",
+                    "name": "dealstage"
+                	}';
+                    }
+                }
 
                 if (isset($fields['total_sales_amount']))
                     $dealJSON .= ',{
@@ -333,6 +337,10 @@ $app->group('/hubspot', function() use ($app) {
                 }
             }
 
+            if (isset($contactFields['hs_lead_status'])) {
+                if (isset($appConfig['hubspot']['dealStages'][$contactFields['hs_lead_status']]))
+                    $contactFields['dealstage'] = $appConfig['hubspot']['dealStages'][$contactFields['hs_lead_status']];
+            }
 
             $fields = array();
             if (isset($dealId)) {
@@ -345,7 +353,7 @@ $app->group('/hubspot', function() use ($app) {
                     if ($key == "firstname" || $key == "hubspot_owner_id" ||
                             $key == "loan_purpose" || $key == "approved_loan_amount" ||
                             $key == "settlement_dt" || $key == "total_sales_amount" ||
-                            $key == "hs_lead_status") {
+                            $key == "hs_lead_status" || $key == "dealstage") {
                         $property = new stdClass();
                         switch ($key) {
                             case 'firstname':
@@ -375,6 +383,12 @@ $app->group('/hubspot', function() use ($app) {
                             case 'hs_lead_status':
                                 if (isset($contactFields[$key])) {
                                     $property->name = "deal_status";
+                                    $property->value = $contactFields[$key];
+                                }
+                                break;
+                            case 'dealstage':
+                                if (isset($contactFields[$key])) {
+                                    $property->name = "dealstage";
                                     $property->value = $contactFields[$key];
                                 }
                                 break;
@@ -650,6 +664,27 @@ $app->group('/contactspace', function () use ($app) {
  * */
 $app->group('/deal', function () use ($app) {
     /*
+     * Update deal stage
+     */
+    $app->post('/updateStage', function() use ($app) {
+        $entityBody = $app->request->getBody();
+
+
+        $hubspotData = json_decode($entityBody);
+
+        $fields = array();
+        $fields['vid'] = $hubspotData->vid;
+
+        //extracting contact information from HubSpot
+        foreach ($hubspotData->properties as $key => $property) {
+            if ($key == "num_associated_deals" || $key == "hs_lead_status")
+                $fields[$key] = $property->value;
+        }
+
+        print_r($fields);
+    });
+
+    /*
      * Called from HubSpot to synchronize deal on HubSpot Sales portal
      * Receives JSON object in request body
      */
@@ -914,11 +949,11 @@ $app->group('/genius', function() use ($app) {
                 $fields[$key] = $property->value;
             }
         }
-        
-        
+
+
         $invalidEmails = array("", "unemployed@1800approved.com.au", "unemployedqld@1800approved.com.au", "bankrupt@1800approved.com.au", "bankruptqld@1800approved.com.au");
-        
-        if(in_array($fields['broker_email'], $invalidEmails)) {
+
+        if (in_array($fields['broker_email'], $invalidEmails)) {
             echo "500";
             return;
         }
@@ -1022,8 +1057,8 @@ $app->group('/genius', function() use ($app) {
                 $fields[$key] = $property->value;
             }
         }
-        
-        
+
+
 
 
 
@@ -1132,8 +1167,8 @@ $app->group('/genius', function() use ($app) {
             $fields['leads_finance_type'] = $instanceGenius->getCoplCodes('loan_types', $fields['loan_purpose'], 'loantype'); //required
         else
             $fields['leads_finance_type'] = "other";
-        
-        
+
+
 
 
         if (!empty($fields['employment_type_']))
@@ -1163,7 +1198,7 @@ $app->group('/genius', function() use ($app) {
         }
 
         if (!empty($fields['gender'])) {
-             
+
             switch (strtolower($fields['gender'])) {
                 case 'm':
                     $fields['gender'] = "male";
@@ -1213,6 +1248,37 @@ $app->group('/finder', function () use ($app) {
         }
 
         echo 200;
+    });
+});
+
+
+/**
+ * Fields group
+ * */
+$app->group('/field', function () use ($app) {
+
+    $app->get("/details", function() use ($app) {
+
+        $appConfig = $app->config('custom');
+
+        $fieldParams = $app->request->get();
+        if (isset($fieldParams['field']) && isset($fieldParams['callback'])) {
+            $url = "http://api.hubapi.com/contacts/v2/properties/named/" . $fieldParams['field'] . "?portalId=" . $appConfig['hubspot']['config']['HUBSPOT_PORTAL_ID'] . "&hapikey=" . $appConfig['hubspot']['config']['HUBSPOT_API_KEY'];
+
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            $response = curl_exec($ch);
+            curl_close($ch);
+
+
+            echo $fieldParams['callback'] . "(";
+            echo $response;
+            echo ")";
+        } else {
+            echo "{'error': 'Invalid message'}";
+        }
     });
 });
 

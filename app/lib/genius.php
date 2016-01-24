@@ -51,7 +51,7 @@ class Genius {
       <BrokerEmail>" . (isset($fields['broker_email']) ? $fields['broker_email'] : "") . "</BrokerEmail>
       <LoanType>" . (isset($fields['leads_finance_type']) ? $fields['leads_finance_type'] : "") . "</LoanType>
       <FirstName>" . (isset($fields['firstname']) ? $fields['firstname'] : "") . "</FirstName>
-      <Surname>" . (isset($fields['lastname']) ? $fields['lastname'] : "") . "</Surname>
+      <Surname>" . (isset($fields['lastname']) ? $fields['lastname'] : "Unknown") . "</Surname>
       <Gender>" . (isset($fields['gender']) ? strtolower($fields['gender']) : "") . "</Gender>
       " . $fields['coplArea'] . "
       " . $fields['coplMob'] . "
