@@ -26,6 +26,8 @@ class LocalWebTestCase extends WebTestCase {
         $customConfig['hubspot']['config'] = $hubspotConfig;
         $customConfig['hubspot']['dealStatuses'] = $geniusDealStatuses;
         $customConfig['hubspot']['dealStages'] = $geniusHSDealStagesMap;
+        $customConfig['hubspot']['dealLostReasons'] = $geniusHSLostReasonMap;
+
 
 
 

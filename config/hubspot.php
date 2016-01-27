@@ -53,3 +53,25 @@ $geniusHSDealStagesMap = array(
 );
 
 
+$geniusHSLostReasonMap = array(
+    'genius_new_enquiry' => '',
+    'genius_call_back' => '',
+    'genius_no_contact' => '',
+    'genius_appointed' => '',
+    'genius_lost_no_contact' => 'Lost no contact',
+    'genius_withdrawn' => 'Lost - Subscriber',
+    'genius_lost' => 'Lost',
+    'genius_declined' => '',
+    'genius_app_taken' => '',
+    'genius_waiting_info' => '',
+    'genius_application' => '',
+    'genius_in_progress' => '',
+    'genius_submitted' => '',
+    'genius_approved' => '',
+    'genius_settled' => '',
+    'genius_new_sms' => '',
+    'genius_activated' => '',
+    'genius_settled_irregular' => ''
+);
+
+

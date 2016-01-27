@@ -203,6 +203,13 @@ $app->group('/hubspot', function() use ($app) {
                     "name": "dealstage"
                 	}';
                     }
+
+                    if (isset($appConfig['hubspot']['dealLostReasons'][$fields['hs_lead_status']])) {
+                        $dealJSON .= ',{
+                    "value": "' . $appConfig['hubspot']['dealLostReasons'][$fields['hs_lead_status']] . '",
+                    "name": "closed_lost_reason"
+                	}';
+                    }
                 }
 
                 if (isset($fields['total_sales_amount']))
@@ -340,6 +347,10 @@ $app->group('/hubspot', function() use ($app) {
             if (isset($contactFields['hs_lead_status'])) {
                 if (isset($appConfig['hubspot']['dealStages'][$contactFields['hs_lead_status']]))
                     $contactFields['dealstage'] = $appConfig['hubspot']['dealStages'][$contactFields['hs_lead_status']];
+
+
+                if (isset($appConfig['hubspot']['dealLostReasons'][$contactFields['hs_lead_status']]))
+                    $contactFields['closed_lost_reason'] = $appConfig['hubspot']['dealLostReasons'][$contactFields['hs_lead_status']];
             }
 
             $fields = array();
@@ -353,7 +364,7 @@ $app->group('/hubspot', function() use ($app) {
                     if ($key == "firstname" || $key == "hubspot_owner_id" ||
                             $key == "loan_purpose" || $key == "approved_loan_amount" ||
                             $key == "settlement_dt" || $key == "total_sales_amount" ||
-                            $key == "hs_lead_status" || $key == "dealstage") {
+                            $key == "hs_lead_status" || $key == "dealstage" || $key == "closed_lost_reason") {
                         $property = new stdClass();
                         switch ($key) {
                             case 'firstname':
@@ -392,12 +403,19 @@ $app->group('/hubspot', function() use ($app) {
                                     $property->value = $contactFields[$key];
                                 }
                                 break;
+                            case 'closed_lost_reason':
+                                if (isset($contactFields[$key])) {
+                                    $property->name = "closed_lost_reason";
+                                    $property->value = $contactFields[$key];
+                                }
+                                break;
                             case 'settlement_dt':
                                 if (isset($contactFields[$key])) {
                                     $property->name = "closedate";
                                     $property->value = $contactFields[$key];
                                 }
                                 break;
+
                             case 'total_sales_amount':
                                 if (isset($contactFields[$key])) {
                                     $property->name = "amount";
@@ -1303,26 +1321,31 @@ $app->group('/misc', function () use ($app) {
         curl_close($ch);
 
         $options = json_decode($response)->options;
-        
-        file_put_contents(__DIR__."/../files/broker_emails.js", 'test('.json_encode($options).')');
 
-        $url = "http://api.hubapi.com/filemanager/api/v2/files?overwrite=true&hapikey=" . $appConfig['hubspot']['config']['HUBSPOT_API_KEY'];
-        $header = array('Content-Type: multipart/form-data');
-        $fields = array("folder_paths" => "proxy", 'files' => "@".__DIR__."/../files/broker_emails.js;type=text/plain");
+        file_put_contents(__DIR__ . "/../files/broker_emails.js", 'test(' . json_encode($options) . ')');
+
+        $url = "http://api.hubapi.com/filemanager/api/v2/files?hapikey=" . $appConfig['hubspot']['config']['HUBSPOT_API_KEY'];
+
+
+        $fields = array("folder_paths" => "proxy", "files" => "@" . __DIR__ . "/../files/broker_emails.js;text/plain");
 
         $ch = "";
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            'Content-Type: multipart/form-data',
+            'Connection: Keep-Alive'
+        ));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
+
         $file_upload_result = curl_exec($ch);
+        $headerInfo = curl_getinfo($ch);
         curl_close($ch);
-        //print json_encode($fields);echo "<br>";
-        
-        echo $file_upload_result;
-        
+
+        print_r(array("http_code" => $headerInfo['http_code'], "response" => $file_upload_result));
     });
 });
 
