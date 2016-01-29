@@ -70,6 +70,14 @@ $app->group('/hubspot', function() use ($app) {
 
         $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
         $contactFields = $app->request->post();
+
+        //making sure broker_email is always in lower case to avoid matching problem as
+        // HubSpot API is case sensitive
+        if (isset($contactFields['broker_email'])) {
+            $contactFields['broker_email'] = str_to_lower($contactFields['broker_email']);
+        }
+
+
         if (!isset($contactFields['email']) || !isset($contactFields['firstname']) || !isset($contactFields['originator'])) {
             echo '{"status":"error","message":"Required fields are missing."}';
         } else {
@@ -86,12 +94,14 @@ $app->group('/hubspot', function() use ($app) {
 
                     if (isset($contactFields['dob'])) {
                         $contactFields['dob'] = str_replace('/', '-', $contactFields['dob']);
-                        $contactFields['dob'] = strtotime($contactFields['dob']) * 1000;
+                        if (strpos($contactFields['dob'], '-') !== false)
+                            $contactFields['dob'] = strtotime($contactFields['dob']) * 1000;
                     }
 
                     if (isset($contactFields['settlement_dt'])) {
                         $contactFields['settlement_dt'] = str_replace('/', '-', $contactFields['settlement_dt']);
-                        $contactFields['settlement_dt'] = strtotime($contactFields['settlement_dt']) * 1000;
+                        if (strpos($contactFields['settlement_dt'], '-') !== false)
+                            $contactFields['settlement_dt'] = strtotime($contactFields['settlement_dt']) * 1000;
                     }
                 }
             }
@@ -109,7 +119,6 @@ $app->group('/hubspot', function() use ($app) {
             }
 
 
-
             $hsResponse = $hubspot->contacts()->create_contact($contactFields);
 
             if ($app->log->getEnabled()) {
@@ -118,6 +127,7 @@ $app->group('/hubspot', function() use ($app) {
             }
 
 
+            //@TODO if Contact already exists we need to update it
 
             if (isset($hsResponse->status)) {
                 if ($hsResponse->status == "error") {
@@ -146,6 +156,10 @@ $app->group('/hubspot', function() use ($app) {
                             $key == "hs_lead_status")
                         $fields[$key] = $property->value;
                 }
+
+
+                //making sure lead status from request is used
+                $fields['hs_lead_status'] = $contactFields['hs_lead_status'];
 
                 if (!isset($fields['hubspot_owner_id'])) {
                     $fields['hubspot_owner_id'] = 4606650;
@@ -197,11 +211,19 @@ $app->group('/hubspot', function() use ($app) {
                     "name": "deal_status"
                 	}';
 
+
                     if (isset($appConfig['hubspot']['dealStages'][$fields['hs_lead_status']])) {
                         $dealJSON .= ',{
                     "value": "' . $appConfig['hubspot']['dealStages'][$fields['hs_lead_status']] . '",
                     "name": "dealstage"
                 	}';
+
+                        if ($appConfig['hubspot']['dealStages'][$fields['hs_lead_status']] == "closedlost") {
+                            $dealJSON .= ',{
+                    "value": "' . time() * 1000 . '",
+                    "name": "closedate"
+                	}';
+                        }
                     }
 
                     if (isset($appConfig['hubspot']['dealLostReasons'][$fields['hs_lead_status']])) {
@@ -218,11 +240,13 @@ $app->group('/hubspot', function() use ($app) {
                     "name": "amount"
                 	}';
 
-                if (isset($fields['settlement_dt']))
+                //if deal status is not lost then execute this block to set correct close date
+                if (isset($fields['settlement_dt']) && $appConfig['hubspot']['dealStages'][$fields['hs_lead_status']] != "closedlost") {
                     $dealJSON .= ',{
                     "value": "' . $fields['settlement_dt'] . '",
                     "name": "closedate"
                 	}';
+                }
 
                 $dealJSON .= ']}';
 
@@ -231,7 +255,6 @@ $app->group('/hubspot', function() use ($app) {
                 $hubspotExt = new Custom\Libs\HubSpotExt();
                 $dealSyncResponseArr = $hubspotExt->insertDeal($dealJSON);
                 $dealResponse = json_decode($dealSyncResponseArr[1]);
-
 
                 $hsResponse->dealId = $dealResponse->dealId;
 
@@ -265,6 +288,12 @@ $app->group('/hubspot', function() use ($app) {
 
         $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
         $contactFields = $app->request->post();
+
+        //making sure broker_email is always in lower case to avoid matching problem as
+        // HubSpot API is case sensitive
+        if (isset($contactFields['broker_email'])) {
+            $contactFields['broker_email'] = str_to_lower($contactFields['broker_email']);
+        }
 
 
 
@@ -318,12 +347,16 @@ $app->group('/hubspot', function() use ($app) {
 
                         if (isset($contactFields['dob'])) {
                             $contactFields['dob'] = str_replace('/', '-', $contactFields['dob']);
-                            $contactFields['dob'] = strtotime($contactFields['dob']) * 1000;
+
+                            if (strpos($contactFields['dob'], '-') !== false)
+                                $contactFields['dob'] = strtotime($contactFields['dob']) * 1000;
                         }
 
                         if (isset($contactFields['settlement_dt'])) {
                             $contactFields['settlement_dt'] = str_replace('/', '-', $contactFields['settlement_dt']);
-                            $contactFields['settlement_dt'] = strtotime($contactFields['settlement_dt']) * 1000;
+
+                            if (strpos($contactFields['settlement_dt'], '-') !== false)
+                                $contactFields['settlement_dt'] = strtotime($contactFields['settlement_dt']) * 1000;
                         }
                     }
                 }
@@ -345,9 +378,12 @@ $app->group('/hubspot', function() use ($app) {
             }
 
             if (isset($contactFields['hs_lead_status'])) {
-                if (isset($appConfig['hubspot']['dealStages'][$contactFields['hs_lead_status']]))
+                if (isset($appConfig['hubspot']['dealStages'][$contactFields['hs_lead_status']])) {
                     $contactFields['dealstage'] = $appConfig['hubspot']['dealStages'][$contactFields['hs_lead_status']];
 
+                    if ($contactFields['dealstage'] == "closedlost")
+                        $contactFields['closedate'] = time() * 1000;
+                }
 
                 if (isset($appConfig['hubspot']['dealLostReasons'][$contactFields['hs_lead_status']]))
                     $contactFields['closed_lost_reason'] = $appConfig['hubspot']['dealLostReasons'][$contactFields['hs_lead_status']];
@@ -364,7 +400,8 @@ $app->group('/hubspot', function() use ($app) {
                     if ($key == "firstname" || $key == "hubspot_owner_id" ||
                             $key == "loan_purpose" || $key == "approved_loan_amount" ||
                             $key == "settlement_dt" || $key == "total_sales_amount" ||
-                            $key == "hs_lead_status" || $key == "dealstage" || $key == "closed_lost_reason") {
+                            $key == "hs_lead_status" || $key == "dealstage" ||
+                            $key == "closed_lost_reason" || $key == "closedate") {
                         $property = new stdClass();
                         switch ($key) {
                             case 'firstname':
@@ -403,6 +440,12 @@ $app->group('/hubspot', function() use ($app) {
                                     $property->value = $contactFields[$key];
                                 }
                                 break;
+                            case 'closedate':
+                                if (isset($contactFields[$key])) {
+                                    $property->name = "closedate";
+                                    $property->value = $contactFields[$key];
+                                }
+                                break;
                             case 'closed_lost_reason':
                                 if (isset($contactFields[$key])) {
                                     $property->name = "closed_lost_reason";
@@ -410,7 +453,7 @@ $app->group('/hubspot', function() use ($app) {
                                 }
                                 break;
                             case 'settlement_dt':
-                                if (isset($contactFields[$key])) {
+                                if (isset($contactFields[$key]) && $contactFields['dealstage'] != "closedlost") {
                                     $property->name = "closedate";
                                     $property->value = $contactFields[$key];
                                 }
@@ -423,7 +466,7 @@ $app->group('/hubspot', function() use ($app) {
                                 }
                                 break;
                         }
-                        if (isset($contactFields[$key])) {
+                        if (isset($contactFields[$key]) && isset($property->name)) {
                             $dealFields[] = $property;
                         }
                     }
