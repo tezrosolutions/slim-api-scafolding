@@ -74,7 +74,7 @@ $app->group('/hubspot', function() use ($app) {
         //making sure broker_email is always in lower case to avoid matching problem as
         // HubSpot API is case sensitive
         if (isset($contactFields['broker_email'])) {
-            $contactFields['broker_email'] = str_to_lower($contactFields['broker_email']);
+            $contactFields['broker_email'] = strtolower($contactFields['broker_email']);
         }
 
 
@@ -292,7 +292,7 @@ $app->group('/hubspot', function() use ($app) {
         //making sure broker_email is always in lower case to avoid matching problem as
         // HubSpot API is case sensitive
         if (isset($contactFields['broker_email'])) {
-            $contactFields['broker_email'] = str_to_lower($contactFields['broker_email']);
+            $contactFields['broker_email'] = strtolower($contactFields['broker_email']);
         }
 
 
