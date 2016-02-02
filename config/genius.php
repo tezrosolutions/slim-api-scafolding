@@ -231,10 +231,10 @@ $jsonLoan_type = '{
 	{"code": "other", "desc": "other"},
         {"code": "other", "desc": "personal_loan"},
         {"code": "other", "desc": "truck_and_equipments"},
-        {"code": "other", "desc": "van"},
-        {"code": "other", "desc": "ute"},
+        {"code": "auto", "desc": "van"},
+        {"code": "auto", "desc": "ute"},
         {"code": "other", "desc": "motorhome"},
-        {"code": "other", "desc": "motorhome"}
+        {"code": "other", "desc": "camper_trailers"}
   ]
 }';
 
