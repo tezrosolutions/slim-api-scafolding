@@ -7,6 +7,7 @@ require 'vendor/autoload.php';
 require 'config/hubspot.php';
 require 'config/genius.php';
 require 'config/contactspace.php';
+require 'config/firebase.php';
 
 
 
@@ -26,7 +27,8 @@ $customConfig['hubspot']['dealStatuses'] = $geniusDealStatuses;
 $customConfig['hubspot']['dealStages'] = $geniusHSDealStagesMap;
 $customConfig['hubspot']['dealLostReasons'] = $geniusHSLostReasonMap;
 
-
+$customConfig['firebase'] = array();
+$customConfig['firebase']['config'] = $firebaseConfig;
 
 
 $customConfig['genius'] = array();

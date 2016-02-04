@@ -1349,6 +1349,56 @@ $app->group('/field', function () use ($app) {
  * */
 $app->group('/misc', function () use ($app) {
 
+    $app->get("/lead_distribution", function() use ($app) {
+
+        $entityBody = $app->request->getBody();
+        $hubspotData = json_decode($entityBody);
+
+        $appConfig = $app->config('custom');
+        $firebase = new \Firebase\FirebaseLib($appConfig['firebase']['config']['FIREBASE_APP_URL'], $appConfig['firebase']['config']['FIREBASE_TOKEN']);
+        $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
+
+        require_once('app/lib/firebase.php');
+
+
+        $customerFields = array();
+        $customerFields['vid'] = $hubspotData->vid;
+        //extracting contact information from HubSpot
+        foreach ($hubspotData->properties as $key => $property) {
+            if ($key == "city" || $key == "state" || $key == "loan_purpose" || $key == "email") {
+                $customerFields[$key] = $property->value;
+            }
+        }
+
+
+        $app->log->debug('[' . date('H:i:s', time()) . '] Customer Fields: ' . json_encode($customerFields));
+        $eligibleBrokers = json_decode($firebase->get("/02-2016"));
+
+
+
+        $brokerArr = array();
+        foreach ($eligibleBrokers as $broker) {
+            $brokerArr[] = $broker;
+        }
+
+
+
+        usort($brokerArr, array('\Custom\Libs\Firebase', 'sortByTotalAmount'));
+
+
+
+        foreach ($brokerArr as $qualifiedBroker) {
+
+            if (\Custom\Libs\Firebase::assignLeadToBroker($app, $qualifiedBroker, $firebase, $hubspot, $customerFields)) {
+                echo "Lead Assigned Succesfully to " . $qualifiedBroker->name;
+                return;
+            }
+        }
+
+        echo "Lead not assigned to any broker";
+    });
+
+
     $app->get("/post_broker_email_field", function() use ($app) {
 
         $appConfig = $app->config('custom');
