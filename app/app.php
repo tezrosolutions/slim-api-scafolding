@@ -1349,10 +1349,11 @@ $app->group('/field', function () use ($app) {
  * */
 $app->group('/misc', function () use ($app) {
 
-    $app->get("/lead_distribution", function() use ($app) {
+    $app->post("/lead_distribution", function() use ($app) {
 
         $entityBody = $app->request->getBody();
         $hubspotData = json_decode($entityBody);
+
 
         $appConfig = $app->config('custom');
         $firebase = new \Firebase\FirebaseLib($appConfig['firebase']['config']['FIREBASE_APP_URL'], $appConfig['firebase']['config']['FIREBASE_TOKEN']);
