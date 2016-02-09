@@ -15,7 +15,7 @@ class Firebase {
     public static function assignLeadToBroker($app, $qualifiedBroker, $firebase, $hubspot, $customerFields) {
 
         $todayDay = date("d-m");
-        $thisMonth = "/".date("m-Y")."/";
+        $thisMonth = "/" . date("m-Y") . "/";
         $qualifiedBrokerKey = strtolower(explode(" ", $qualifiedBroker->name)[1]);
         if (isset($qualifiedBroker->lead_assigment->$todayDay)) {
             $assignedToday = (int) $qualifiedBroker->lead_assigment->$todayDay;
@@ -35,9 +35,6 @@ class Firebase {
 
 
 
-            echo $dailyCap . ">" . $assignedToday . " && " . $monthCap . ">" . $assignedToday;
-            echo "<br><br>";
-
 
             if ($dailyCap > $assignedToday && $monthCap > $assignedToday) {
                 $leadTypeMatched = false;
@@ -50,22 +47,10 @@ class Firebase {
 
                 if (!$leadTypeMatched)
                     return false;
-
-                if (isset($qualifiedBroker->preferred_address) && isset($qualifiedBroker->preferred_state)) {
-                    if (!is_array($qualifiedBroker->preferred_address)) {
-                    if (!empty($qualifiedBroker->preferred_address)) {
-                            if (!strpos($customerFields['city'], $qualifiedBroker->preferred_address) || !strpos($customerFields['state'], $qualifiedBroker->preferred_state)) {
-                                return false;
-                            }
-                        } else {
-                            if (!strpos($customerFields['state'], $qualifiedBroker->preferred_state)) {
-                                return false;
-                            }
-                        }
-                    } else {
-                        if (!array_search($customerFields['city'], $qualifiedBroker->preferred_address) || !strpos($customerFields['state'], $qualifiedBroker->preferred_state)) {
-                            return false;
-                        }
+                
+                if (isset($qualifiedBroker->preferred_zip)) {
+                    if (!preg_match($qualifiedBroker->preferred_zip, $customerFields['zip'])) {
+                        return false;
                     }
                 }
 
@@ -94,23 +79,10 @@ class Firebase {
             if (!$leadTypeMatched)
                 return false;
 
-
-
-            if (isset($qualifiedBroker->preferred_address) && isset($qualifiedBroker->preferred_state)) {
-                if (!is_array($qualifiedBroker->preferred_address)) {
-                    if (!empty($qualifiedBroker->preferred_address)) {
-                        if (!strpos($customerFields['city'], $qualifiedBroker->preferred_address) || !strpos($customerFields['state'], $qualifiedBroker->preferred_state)) {
-                            return false;
-                        }
-                    } else {
-                        if (!strpos($customerFields['state'], $qualifiedBroker->preferred_state)) {
-                            return false;
-                        }
-                    }
-                } else {
-                    if (!array_search($customerFields['city'], $qualifiedBroker->preferred_address) || !strpos($customerFields['state'], $qualifiedBroker->preferred_state)) {
-                        return false;
-                    }
+            
+            if (isset($qualifiedBroker->preferred_zip)) {
+                if (!preg_match($qualifiedBroker->preferred_zip, $customerFields['zip'])) {
+                    return false;
                 }
             }
 

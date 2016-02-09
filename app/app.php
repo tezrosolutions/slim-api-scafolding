@@ -1348,6 +1348,19 @@ $app->group('/field', function () use ($app) {
  * Fields group
  * */
 $app->group('/misc', function () use ($app) {
+    $app->get("/match_zip/:zip", function($zip) use ($app) {
+        //print preg_match('/^(^3[0-9]{3})$/',$zip);//Alister
+        //print preg_match('/^(4[7|8][0-9]{2})$/',$zip);//Damien
+        //print preg_match('/^(42[0-9]{2})$/',$zip);//Ryan
+        //print preg_match('/^(6[0-9]{3})$/',$zip);//Henry
+        //print preg_match('/^(4[4-6]{1}[0-9]{2})$/',$zip);//Wayne
+        //print preg_match('/^(4[1-3]{1}[0-9]{2})$/',$zip);//Jed
+        //print preg_match('/^(2[0-7]{1}[0-9]{2})$/',$zip);//Russel Dunn
+        //print preg_match('/^(5[0-9]{3})$/',$zip);//Russel Pelvin
+        //print preg_match('/^(08[0-9]{2})$/',$zip);//Bronwyn
+        //print preg_match('/^(4[2-3]{1}[0-9]{2})$/',$zip);//Matthew
+        
+    });
 
     $app->post("/lead_distribution", function() use ($app) {
 
@@ -1366,7 +1379,7 @@ $app->group('/misc', function () use ($app) {
         $customerFields['vid'] = $hubspotData->vid;
         //extracting contact information from HubSpot
         foreach ($hubspotData->properties as $key => $property) {
-            if ($key == "city" || $key == "state" || $key == "loan_purpose" || $key == "email") {
+            if ($key == "zip" || $key == "loan_purpose" || $key == "email") {
                 $customerFields[$key] = $property->value;
             }
         }
