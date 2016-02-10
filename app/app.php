@@ -1408,7 +1408,8 @@ $app->group('/misc', function () use ($app) {
                 return;
             }
         }
-
+        
+        $app->log->debug('[' . date('H:i:s', time()) . '] WARNING: Lead not assigned, no broker qualified.');
         echo "Lead not assigned to any broker";
     });
 
