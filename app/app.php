@@ -1359,6 +1359,7 @@ $app->group('/misc', function () use ($app) {
         //print preg_match('/^(5[0-9]{3})$/',$zip);//Russel Pelvin
         //print preg_match('/^(08[0-9]{2})$/',$zip);//Bronwyn
         //print preg_match('/^(4[2-3]{1}[0-9]{2})$/',$zip);//Matthew
+        //print preg_match('/^(4[0|1][1-9]{1}[0-9]{1})$/',$zip);//James Grady
         
     });
 
@@ -1379,28 +1380,62 @@ $app->group('/misc', function () use ($app) {
         $customerFields['vid'] = $hubspotData->vid;
         //extracting contact information from HubSpot
         foreach ($hubspotData->properties as $key => $property) {
-            if ($key == "zip" || $key == "loan_purpose" || $key == "email") {
+            if ($key == "zip" || $key == "loan_purpose" || $key == "email" || $key == "employment_type_"
+                || $key == "credit_status" || $key == "dob") {
                 $customerFields[$key] = $property->value;
             }
         }
-
-
+        
         $app->log->debug('[' . date('H:i:s', time()) . '] Customer Fields: ' . json_encode($customerFields));
         $eligibleBrokers = json_decode($firebase->get("/02-2016"));
+        
+        $error = 0;
+        //Checking  Employment Status
+        if($customerFields['employment_type_'] == "un_employed") {
+            $app->log->debug('[' . date('H:i:s', time()) . '] WARNING: Lead not assigned, lead emplyment status is unemployed.');
+            $error++;  
+        }
+        
+        //Checkin Credit Status
+        if($customerFields['credit_status'] == "Bankruptcy") {
+            $app->log->debug('[' . date('H:i:s', time()) . '] WARNING: Lead not assigned, lead credit status is Bankruptcy.');
+            $error++;  
+        }
+        
+        if(isset($customerFields['dob'])) {
+            $now = strtotime(date('Y-m-d')); // Today in UNIX Timestamp
+            $dob = $customerFields['dob']/1000;
+            $age = $now - $dob; // As the UNIX Timestamp is in seconds, get the seconds you lived
+            $age = floor($age / 60 / 60 / 24 / 365);
+            
+            if($age < 18) {
+                $app->log->debug('[' . date('H:i:s', time()) . '] WARNING: Lead not assigned, Age less than 18.');
+                $error++; 
+            }
+        } 
+        
+        
+        
+        
+        if($error > 0) {
+            echo "Lead not assigned to any broker";
+            return;
+        }
 
+        
 
+        /*
+         * This block will be executed if employment status, credit status and DOB is correct
+         */
 
         $brokerArr = array();
         foreach ($eligibleBrokers as $broker) {
+            $app->log->debug('[' . date('H:i:s', time()) . '] WARNING: Lead not assigned, no broker qualified.');
             $brokerArr[] = $broker;
         }
-
-
-
+        
         usort($brokerArr, array('\Custom\Libs\Firebase', 'sortByTotalAmount'));
-
-
-
+        
         foreach ($brokerArr as $qualifiedBroker) {
 
             if (\Custom\Libs\Firebase::assignLeadToBroker($app, $qualifiedBroker, $firebase, $hubspot, $customerFields)) {
