@@ -67,6 +67,11 @@ class Firebase {
                 return false;
             }
         } else {
+            if (isset($qualifiedBroker->daily_cap)) {//incase if dailycap is set to zero
+                if($qualifiedBroker->daily_cap == 0)
+                    return false;
+            }
+            
             $leadTypeMatched = false;
 
             foreach ($qualifiedBroker->lead_requests[0] as $key => $leadRequest) {

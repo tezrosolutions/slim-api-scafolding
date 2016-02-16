@@ -1381,7 +1381,7 @@ $app->group('/misc', function () use ($app) {
         //extracting contact information from HubSpot
         foreach ($hubspotData->properties as $key => $property) {
             if ($key == "zip" || $key == "loan_purpose" || $key == "email" || $key == "employment_type_"
-                || $key == "credit_status" || $key == "dob") {
+                || $key == "credit_status" || $key == "dob" || $key == "broker_email") {
                 $customerFields[$key] = $property->value;
             }
         }
@@ -1392,13 +1392,13 @@ $app->group('/misc', function () use ($app) {
         $error = 0;
         //Checking  Employment Status
         if($customerFields['employment_type_'] == "un_employed") {
-            $app->log->debug('[' . date('H:i:s', time()) . '] WARNING: Lead not assigned, lead emplyment status is unemployed.');
+            $app->log->debug('[' . date('H:i:s', time()) . '] ERROR: Lead not assigned, lead emplyment status is unemployed.');
             $error++;  
         }
         
         //Checkin Credit Status
         if($customerFields['credit_status'] == "Bankruptcy") {
-            $app->log->debug('[' . date('H:i:s', time()) . '] WARNING: Lead not assigned, lead credit status is Bankruptcy.');
+            $app->log->debug('[' . date('H:i:s', time()) . '] ERROR: Lead not assigned, lead credit status is Bankruptcy.');
             $error++;  
         }
         
@@ -1409,10 +1409,18 @@ $app->group('/misc', function () use ($app) {
             $age = floor($age / 60 / 60 / 24 / 365);
             
             if($age < 18) {
-                $app->log->debug('[' . date('H:i:s', time()) . '] WARNING: Lead not assigned, Age less than 18.');
+                $app->log->debug('[' . date('H:i:s', time()) . '] ERROR: Lead not assigned, Age less than 18.');
                 $error++; 
             }
-        } 
+        }
+        
+        
+        if(isset($customerFields['broker_email'])) {
+            if($customerFields['broker_email'] != "") {
+                $app->log->debug('[' . date('H:i:s', time()) . '] ERROR: Lead already assigned to broker: '. $customerFields['broker_email']);
+                $error++; 
+            }
+        }
         
         
         
