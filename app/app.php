@@ -71,6 +71,10 @@ $app->group('/hubspot', function() use ($app) {
         $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
         $contactFields = $app->request->post();
 
+
+        require_once('app/lib/hubspotext.php');
+        $hubspotExt = new Custom\Libs\HubSpotExt();
+
         //making sure broker_email is always in lower case to avoid matching problem as
         // HubSpot API is case sensitive
         if (isset($contactFields['broker_email'])) {
@@ -103,6 +107,10 @@ $app->group('/hubspot', function() use ($app) {
                         if (strpos($contactFields['settlement_dt'], '-') !== false)
                             $contactFields['settlement_dt'] = strtotime($contactFields['settlement_dt']) * 1000;
                     }
+
+
+                    //Setting original soure code here
+                    //$contactFields = $hubspotExt->getSourceInformation($contactFields, 'genius', $hubspot);
                 }
             }
 
@@ -251,8 +259,7 @@ $app->group('/hubspot', function() use ($app) {
                 $dealJSON .= ']}';
 
 
-                require_once('app/lib/hubspotext.php');
-                $hubspotExt = new Custom\Libs\HubSpotExt();
+
                 $dealSyncResponseArr = $hubspotExt->insertDeal($dealJSON);
                 $dealResponse = json_decode($dealSyncResponseArr[1]);
 
@@ -963,6 +970,8 @@ $app->group('/genius', function() use ($app) {
             ]
         }';
 
+
+
             $dealGetResponseArr = $hubspotExt->updateDeal($vid, $fields);
 
             if ($app->log->getEnabled()) {
@@ -1294,12 +1303,19 @@ $app->group('/finder', function () use ($app) {
         $form_fields['credit_defaults'] = (strtolower($app->request->post("credit_defaults")) == "yes") ? true : false;
         $form_fields['hs_lead_status'] = "PROSPECT";
 
+        //@TODO Put original source code here
+
+
         $appConfig = $app->config('custom');
         $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
 
 
-
-
+        //Setting original soure code here
+        /*require_once('app/lib/hubspotext.php');
+        $hubspotExt = new Custom\Libs\HubSpotExt();
+        $form_fields = $hubspotExt->getSourceInformation($form_fields, 'finder', $hubspot);
+        */
+        
         $hsResponse = $hubspot->contacts()->create_contact($form_fields);
 
 
@@ -1348,6 +1364,165 @@ $app->group('/field', function () use ($app) {
  * Fields group
  * */
 $app->group('/misc', function () use ($app) {
+    $app->get("/update_deal", function() use ($app) {
+        $appConfig = $app->config('custom');
+
+        require_once('app/lib/hubspotext.php');
+        $dealIDs = json_decode(file_get_contents("https://api.myjson.com/bins/5b62v"));
+
+        foreach ($dealIDs as $dealID) {
+
+
+            $hubspotExt = new Custom\Libs\HubSpotExt();
+            $dealOfInterest = $hubspotExt->getDeal($dealID->deal_id)[1];
+            $fields = array();
+
+            if (isset(json_decode($dealOfInterest)->associations->associatedVids[0])) {//update lead status and settlement date
+                $contactID = json_decode($dealOfInterest)->associations->associatedVids[0];
+                $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
+
+                $hsContact = $hubspot->contacts()->get_contact_by_id($contactID);
+
+                //if no contact is associated
+                if (!isset($hsContact->vid)) {
+                    echo '{"status": "error", "message": "No contact associated with this deal."}';
+                    return;
+                }
+
+                $contactFields = array();
+
+                foreach ($hsContact->properties as $key => $property) {
+
+                    if ($key == "firstname" || $key == "hubspot_owner_id" ||
+                            $key == "loan_purpose" || $key == "approved_loan_amount" ||
+                            $key == "settlement_dt" || $key == "total_sales_amount" ||
+                            $key == "hs_lead_status") {
+                        $contactFields[$key] = $property->value;
+                    }
+                }
+
+
+
+                if (isset($contactFields['hs_lead_status'])) {
+                    if (isset($appConfig['hubspot']['dealStages'][$contactFields['hs_lead_status']])) {
+                        $contactFields['dealstage'] = $appConfig['hubspot']['dealStages'][$contactFields['hs_lead_status']];
+
+                        if ($contactFields['dealstage'] == "closedlost")
+                            $contactFields['closedate'] = time() * 1000;
+                    }
+
+                    if (isset($appConfig['hubspot']['dealLostReasons'][$contactFields['hs_lead_status']]))
+                        $contactFields['closed_lost_reason'] = $appConfig['hubspot']['dealLostReasons'][$contactFields['hs_lead_status']];
+                }
+
+                $dealFields = array();
+                //extracting contact information from HubSpot contact create request response.
+                foreach ($contactFields as $key => $value) {
+
+                    if ($key == "firstname" || $key == "hubspot_owner_id" ||
+                            $key == "loan_purpose" || $key == "approved_loan_amount" ||
+                            $key == "settlement_dt" || $key == "total_sales_amount" ||
+                            $key == "hs_lead_status" || $key == "dealstage" ||
+                            $key == "closed_lost_reason" || $key == "closedate") {
+                        $property = new stdClass();
+                        switch ($key) {
+                            case 'firstname':
+                                if (isset($contactFields[$key])) {
+                                    $property->name = "dealname";
+                                    $property->value = $contactFields[$key] . "'s Deal";
+                                }
+                                break;
+                            case 'approved_loan_amount':
+                                if (isset($contactFields[$key])) {
+                                    $property->name = "loan_amount";
+                                    $property->value = $contactFields[$key];
+                                }
+                                break;
+                            case 'loan_purpose':
+                                if (isset($contactFields[$key])) {
+                                    $property->name = "loan_purpose";
+                                    $property->value = $contactFields[$key];
+                                }
+                                break;
+                            case 'hubspot_owner_id':
+                                if (isset($contactFields[$key])) {
+                                    $property->name = "hubspot_owner_id";
+                                    $property->value = $contactFields[$key];
+                                }
+                                break;
+                            case 'hs_lead_status':
+                                if (isset($contactFields[$key])) {
+                                    $property->name = "deal_status";
+                                    $property->value = $contactFields[$key];
+                                }
+                                break;
+                            case 'dealstage':
+                                if (isset($contactFields[$key])) {
+                                    $property->name = "dealstage";
+                                    $property->value = $contactFields[$key];
+                                }
+                                break;
+                            case 'closedate':
+                                if (isset($contactFields[$key])) {
+                                    $property->name = "closedate";
+                                    $property->value = $contactFields[$key];
+                                }
+                                break;
+                            case 'closed_lost_reason':
+                                if (isset($contactFields[$key])) {
+                                    $property->name = "closed_lost_reason";
+                                    $property->value = $contactFields[$key];
+                                }
+                                break;
+                            case 'settlement_dt':
+                                if (isset($contactFields[$key])) {
+                                    if (isset($contactFields['dealstage'])) {
+                                        if ($contactFields['dealstage'] != "closedlost") {
+                                            $property->name = "closedate";
+                                            $property->value = $contactFields[$key];
+                                        }
+                                    } else {
+                                        $property->name = "closedate";
+                                        $property->value = $contactFields[$key];
+                                    }
+                                }
+                                break;
+
+                            case 'total_sales_amount':
+                                if (isset($contactFields[$key])) {
+                                    $property->name = "amount";
+                                    $property->value = $contactFields[$key];
+                                }
+                                break;
+                        }
+                        if (isset($contactFields[$key]) && isset($property->name)) {
+                            $dealFields[] = $property;
+                        }
+                    }
+                }
+                echo $dealID->deal_id . " => ";
+                print_r($dealFields);
+                echo "<br>";
+                $dealData = new stdClass();
+                $dealData->properties = $dealFields;
+
+                $dealGetResponseArr = $hubspotExt->updateDeal($dealID->deal_id, json_encode($dealData));
+                echo $dealGetResponseArr[1];
+                echo "<br><br><br>";
+
+
+                if ($app->log->getEnabled()) {
+                    $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Request Body: ' . json_encode($dealData));
+                    $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Response Body: ' . $dealGetResponseArr[1]);
+                    $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Deal Update Response Status: ' . $dealGetResponseArr[0]);
+                }
+            } else {
+                echo $dealID->deal_id . " => ";
+                echo '{"status": "error", "message": "Deal not found."}<br><br><br>';
+            }
+        }
+    });
+
     $app->get("/match_zip/:zip", function($zip) use ($app) {
         //print preg_match('/^(^3[0-9]{3})$/',$zip);//Alister
         //print preg_match('/^(4[7|8][0-9]{2})$/',$zip);//Damien
@@ -1357,10 +1532,9 @@ $app->group('/misc', function () use ($app) {
         //print preg_match('/^(4[1-3]{1}[0-9]{2})$/',$zip);//Jed
         //print preg_match('/^(2[0-7]{1}[0-9]{2})$/',$zip);//Russel Dunn
         //print preg_match('/^(5[0-9]{3})$/',$zip);//Russel Pelvin
-        //print preg_match('/^(08[0-9]{2})$/',$zip);//Bronwyn
+        print preg_match('/^(0[8|9][0-9]{2})$/', $zip); //Bronwyn
         //print preg_match('/^(4[2-3]{1}[0-9]{2})$/',$zip);//Matthew
         //print preg_match('/^(4[0|1][1-9]{1}[0-9]{1})$/',$zip);//James Grady
-        
     });
 
     $app->post("/lead_distribution", function() use ($app) {
@@ -1380,57 +1554,56 @@ $app->group('/misc', function () use ($app) {
         $customerFields['vid'] = $hubspotData->vid;
         //extracting contact information from HubSpot
         foreach ($hubspotData->properties as $key => $property) {
-            if ($key == "zip" || $key == "loan_purpose" || $key == "email" || $key == "employment_type_"
-                || $key == "credit_status" || $key == "dob" || $key == "broker_email") {
+            if ($key == "zip" || $key == "loan_purpose" || $key == "email" || $key == "employment_type_" || $key == "credit_status" || $key == "dob" || $key == "broker_email") {
                 $customerFields[$key] = $property->value;
             }
         }
-        
+
         $app->log->debug('[' . date('H:i:s', time()) . '] Customer Fields: ' . json_encode($customerFields));
         $eligibleBrokers = json_decode($firebase->get("/02-2016"));
-        
+
         $error = 0;
         //Checking  Employment Status
-        if($customerFields['employment_type_'] == "un_employed") {
+        if ($customerFields['employment_type_'] == "un_employed") {
             $app->log->debug('[' . date('H:i:s', time()) . '] ERROR: Lead not assigned, lead emplyment status is unemployed.');
-            $error++;  
+            $error++;
         }
-        
+
         //Checkin Credit Status
-        if($customerFields['credit_status'] == "Bankruptcy") {
+        if ($customerFields['credit_status'] == "Bankruptcy") {
             $app->log->debug('[' . date('H:i:s', time()) . '] ERROR: Lead not assigned, lead credit status is Bankruptcy.');
-            $error++;  
+            $error++;
         }
-        
-        if(isset($customerFields['dob'])) {
+
+        if (isset($customerFields['dob'])) {
             $now = strtotime(date('Y-m-d')); // Today in UNIX Timestamp
-            $dob = $customerFields['dob']/1000;
+            $dob = $customerFields['dob'] / 1000;
             $age = $now - $dob; // As the UNIX Timestamp is in seconds, get the seconds you lived
             $age = floor($age / 60 / 60 / 24 / 365);
-            
-            if($age < 18) {
+
+            if ($age < 18) {
                 $app->log->debug('[' . date('H:i:s', time()) . '] ERROR: Lead not assigned, Age less than 18.');
-                $error++; 
+                $error++;
             }
         }
-        
-        
-        if(isset($customerFields['broker_email'])) {
-            if($customerFields['broker_email'] != "") {
-                $app->log->debug('[' . date('H:i:s', time()) . '] ERROR: Lead already assigned to broker: '. $customerFields['broker_email']);
-                $error++; 
+
+
+        if (isset($customerFields['broker_email'])) {
+            if ($customerFields['broker_email'] != "") {
+                $app->log->debug('[' . date('H:i:s', time()) . '] ERROR: Lead already assigned to broker: ' . $customerFields['broker_email']);
+                $error++;
             }
         }
-        
-        
-        
-        
-        if($error > 0) {
+
+
+
+
+        if ($error > 0) {
             echo "Lead not assigned to any broker";
             return;
         }
 
-        
+
 
         /*
          * This block will be executed if employment status, credit status and DOB is correct
@@ -1441,9 +1614,9 @@ $app->group('/misc', function () use ($app) {
             $app->log->debug('[' . date('H:i:s', time()) . '] WARNING: Lead not assigned, no broker qualified.');
             $brokerArr[] = $broker;
         }
-        
+
         usort($brokerArr, array('\Custom\Libs\Firebase', 'sortByTotalAmount'));
-        
+
         foreach ($brokerArr as $qualifiedBroker) {
 
             if (\Custom\Libs\Firebase::assignLeadToBroker($app, $qualifiedBroker, $firebase, $hubspot, $customerFields)) {
@@ -1451,7 +1624,7 @@ $app->group('/misc', function () use ($app) {
                 return;
             }
         }
-        
+
         $app->log->debug('[' . date('H:i:s', time()) . '] WARNING: Lead not assigned, no broker qualified.');
         echo "Lead not assigned to any broker";
     });

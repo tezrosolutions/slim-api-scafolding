@@ -140,20 +140,20 @@ class EmailLeads {
                     if ($key == 'Phone') {
                         $phone = @htmlentities($value, ENT_QUOTES);
                     }
-                    
-                    
+
+
                     //@TODO find a solution for date later
-                    /*if ($key == 'Date') {
-                        $dob = @htmlentities($value, ENT_QUOTES);
-                    }*/
+                    /* if ($key == 'Date') {
+                      $dob = @htmlentities($value, ENT_QUOTES);
+                      } */
 
 
                     if ($key == 'Australian Citizen') {
-                        $australianCitizen = (@htmlentities($value, ENT_QUOTES)=="Yes")?true:false;
+                        $australianCitizen = (@htmlentities($value, ENT_QUOTES) == "Yes") ? true : false;
                     }
 
                     if ($key == 'Credit Defaults') {
-                        $creditDefaults = (@htmlentities($value, ENT_QUOTES)=="Yes")?true:false;
+                        $creditDefaults = (@htmlentities($value, ENT_QUOTES) == "Yes") ? true : false;
                     }
                 }//END LOOP TO CREATE VARS
 
@@ -271,10 +271,22 @@ class EmailLeads {
                         $forms_fields['credit_defaults'] = $creditDefaults;
                     }
 
+                    
+
+
+
+
 
                     $appConfig = $app->config('custom');
 
                     $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
+                    
+                    //putting source information
+                    /*require_once('app/lib/hubspotext.php');
+                    $hubspotExt = new Custom\Libs\HubSpotExt();
+                    $forms_fields = $hubspotExt->getSourceInformation($forms_fields, 'carsales', $hubspot);
+                    */
+                    
                     $response = $hubspot->contacts()->create_contact($forms_fields);
 
                     if ($app->log->getEnabled()) {
@@ -284,8 +296,8 @@ class EmailLeads {
                 }
                 /*                 * *** DELETE EMAILS **** */
 
-                /*imap_delete($inbox, $email_number, $messageUid);
-                imap_expunge($inbox);*/
+                /* imap_delete($inbox, $email_number, $messageUid);
+                  imap_expunge($inbox); */
             }
         }
 
@@ -467,10 +479,19 @@ class EmailLeads {
                     }
 
 
-
                     $appConfig = $app->config('custom');
 
+
+
                     $hubspot = new Fungku\HubSpot($appConfig['hubspot']['config']['HUBSPOT_API_KEY']);
+                    
+                    //putting source information
+                    /*require_once('app/lib/hubspotext.php');
+                    $hubspotExt = new Custom\Libs\HubSpotExt();
+                    $contact_fields = $hubspotExt->getSourceInformation($contact_fields, 'loanplace', $hubspot);
+                    */
+
+
                     $response = $hubspot->contacts()->create_contact($contact_fields);
 
                     if ($app->log->getEnabled()) {
@@ -480,8 +501,8 @@ class EmailLeads {
                 }
                 /*                 * *** DELETE EMAILS **** */
 
-                /*imap_delete($inbox, $email_number, $messageUid);
-                imap_expunge($inbox);*/
+                /* imap_delete($inbox, $email_number, $messageUid);
+                  imap_expunge($inbox); */
             }
         }
 

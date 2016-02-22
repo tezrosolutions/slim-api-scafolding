@@ -97,5 +97,66 @@ class HubSpotExt {
         return array($info['http_code'], $body);
     }
 
-   
+    public function getSourceInformation($contactFields, $type, $hubspot) {
+
+        $hsSearchResponse = $hubspot->contacts()->search_contacts(array("q" => $contactFields['email']));
+
+        $recordExists = false;
+        if ($hsSearchResponse->total > 0) {
+            $recordExists = true;
+        }
+
+
+        switch ($type) {
+            case 'genius':
+                $contactFields['recent_conversion_event_name'] = "Genius";
+
+                if (!$recordExists) {
+                    $contactFields['hs_analytics_source'] = "Offline Sources";
+
+                    if (isset($contactFields['broker_full_name'])) {
+                        $contactFields['hs_analytics_source_data_1'] = $contactFields['broker_full_name'];
+                    }
+
+                    if (isset($contactFields['introducer'])) {
+                        $contactFields['hs_analytics_source_data_2'] = "Genius / " . $contactFields['introducer'];
+                    }
+                }
+                break;
+            case 'carsales':
+                $contactFields['recent_conversion_event_name'] = "Dev_Carsales";
+
+                if (!$recordExists) {
+                    $contactFields['hs_analytics_source'] = "Other Campaigns";
+                    $contactFields['hs_analytics_source_data_1'] = "carsales";
+                    $contactFields['hs_analytics_source_data_2'] = "carsales.com.au / application";
+                    $contactFields['first_conversion_event_name'] = "Dev_Carsales";
+                }
+                break;
+            case 'loanplace':
+                $contactFields['recent_conversion_event_name'] = "Dev_Loanplace";
+
+                if (!$recordExists) {
+                    $contactFields['hs_analytics_source'] = "Other Campaigns";
+                    $contactFields['hs_analytics_source_data_1'] = "loanplace";
+                    $contactFields['hs_analytics_source_data_2'] = "loanplace.com.au / application";
+                    $contactFields['first_conversion_event_name'] = "Dev_Loanplace";
+                }
+
+                break;
+            case 'finder':
+                $contactFields['recent_conversion_event_name'] = "finder.com.au";
+
+                if (!$recordExists) {
+                    $contactFields['hs_analytics_source'] = "Other Campaigns";
+                    $contactFields['hs_analytics_source_data_1'] = "finder";
+                    $contactFields['hs_analytics_source_data_2'] = "finder.com.au / api";
+                    $contactFields['first_conversion_event_name'] = "finder.com.au";
+                }
+                break;
+        }
+
+        return $contactFields;
+    }
+
 }
