@@ -1,7 +1,9 @@
 <?php
+
 //turn all reporting on
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+date_default_timezone_set('Australia/Brisbane');
 
 require 'vendor/autoload.php';
 require 'config/hubspot.php';
@@ -14,10 +16,10 @@ require 'config/firebase.php';
 
 \Slim\Slim::registerAutoloader();
 
-if($_SERVER['HTTP_HOST'] == "api-1800approved.rhcloud.com") {
-	$logWriter = new \Slim\LogWriter(fopen(__DIR__ . '/logs-os', 'a'));
+if ($_SERVER['HTTP_HOST'] == "api-1800approved.rhcloud.com") {
+    $logWriter = new \Slim\LogWriter(fopen(__DIR__ . '/logs-os', 'a'));
 } else {
-	$logWriter = new \Slim\LogWriter(fopen(__DIR__ . '/logs/log-'.date('Y-m-d', time()), 'a'));
+    $logWriter = new \Slim\LogWriter(fopen(__DIR__ . '/logs/log-' . date('Y-m-d', time()), 'a'));
 }
 $customConfig = array();
 
@@ -37,10 +39,10 @@ $customConfig['genius']['config'] = $geniusConfig;
 
 
 $customConfig['contactspace'] = array();
-$customConfig['contactspace']['sourceCodes'] = $contactspaceSourceCodes; 
+$customConfig['contactspace']['sourceCodes'] = $contactspaceSourceCodes;
 
 
-$app = new \Slim\Slim(array('log.writer' => $logWriter, 'custom' => $customConfig ));
+$app = new \Slim\Slim(array('log.writer' => $logWriter, 'custom' => $customConfig));
 
 $app->add(new \Slim\Middleware\HttpBasicAuthentication([
     "realm" => "Protected",
@@ -50,8 +52,7 @@ $app->add(new \Slim\Middleware\HttpBasicAuthentication([
         "genius" => "gEn1u5_C0n",
         "hubspot" => "hUb5p0t_C0n",
         "contactspace" => "c0nTa9t5Pac3",
-        "apidocs" => "apicdocs123#"
-        
+        "apidocs" => "apidocs123#"
     ]
 ]));
 

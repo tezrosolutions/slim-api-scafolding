@@ -12,13 +12,62 @@ class Firebase {
         return $y->total_budget - $x->total_budget;
     }
 
+    public static function rollOverDailyCap($app, $yesterday, $qualifiedBroker, $firebase, $thisMonth, $qualifiedBrokerKey, $today) {
+        $rollOvers = 0;
+
+        $monthCap = (int) $qualifiedBroker->total_leads;
+        if (isset($qualifiedBroker->daily_cap)) {
+            $dailyCap = (int) $qualifiedBroker->daily_cap;
+        } else {
+            $dailyCap = ceil($monthCap / 30);
+        }
+
+
+        if (isset($qualifiedBroker->assigned->$yesterday)) {
+            $assigned = count($qualifiedBroker->assigned->$yesterday);
+
+            if (isset($qualifiedBroker->active_roll_overs)) {
+                $dailyCap += $qualifiedBroker->active_roll_overs;
+            }
+
+            $rollOvers = $dailyCap - $assigned;
+        } else {
+            $rollOvers = $dailyCap;
+        }
+
+        $firebase->set($thisMonth . $qualifiedBrokerKey . "/active_roll_overs/", $rollOvers);
+        $firebase->set($thisMonth . $qualifiedBrokerKey . "/roll_overs/" . $today, $rollOvers);
+
+        $app->log->debug('[' . date('H:i:s', time()) . '] RollOvers for ' . $qualifiedBroker->name . ': ' . $rollOvers);
+    }
+
     public static function assignLeadToBroker($app, $qualifiedBroker, $firebase, $hubspot, $customerFields) {
 
-        $todayDay = date("d-m");
         $thisMonth = "/" . date("m-Y") . "/";
+
         $qualifiedBrokerKey = strtolower(explode(" ", $qualifiedBroker->name)[1]);
-        if (isset($qualifiedBroker->lead_assigment->$todayDay)) {
-            $assignedToday = (int) $qualifiedBroker->lead_assigment->$todayDay;
+        
+        $appConfig = $app->config('custom');
+
+        if (date('H') >= $appConfig['firebase']['config']['daily_reset_hour']) {
+            $todayDay = date("d-m", strtotime("+1 days"));
+
+            //making sure rollover are added
+            $yesterday = date("d-m");
+            if (!isset($qualifiedBroker->roll_overs->$todayDay)) {
+
+                Firebase::rollOverDailyCap($app, $yesterday, $qualifiedBroker, $firebase, $thisMonth, $qualifiedBrokerKey, $todayDay);
+            }
+        } else {
+            $todayDay = date("d-m");
+        }
+
+        $app->log->debug('[' . date('H:i:s', time()) . '] Date assgined for: ' . $todayDay);
+
+
+
+        if (isset($qualifiedBroker->assigned->$todayDay)) {
+            $assignedToday = count($qualifiedBroker->assigned->$todayDay);
 
 
 
@@ -31,8 +80,9 @@ class Firebase {
                 $dailyCap = ceil($monthCap / 30);
             }
 
-
-
+            if (isset($qualifiedBroker->active_roll_overs)) {
+                $dailyCap += $qualifiedBroker->active_roll_overs;
+            }
 
 
 
@@ -47,7 +97,7 @@ class Firebase {
 
                 if (!$leadTypeMatched)
                     return false;
-                
+
                 if (isset($qualifiedBroker->preferred_zip)) {
                     if (!preg_match($qualifiedBroker->preferred_zip, $customerFields['zip'])) {
                         return false;
@@ -61,17 +111,17 @@ class Firebase {
                     $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Contact Request: ' . json_encode(array("broker_email" => $qualifiedBroker->email)));
                     $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Contact Response Body: ' . json_encode($hsResponse));
                 }
-
-                $firebase->set($thisMonth . $qualifiedBrokerKey . "/lead_assigment/" . $todayDay, (int) $firebase->get($thisMonth . $qualifiedBrokerKey . "/lead_assigment/" . $todayDay) + 1);
+                $customerFields["broker_email"] = $qualifiedBroker->email;
+                $firebase->set($thisMonth . $qualifiedBrokerKey . "/assigned/" . $todayDay . "/" . $assignedToday, $customerFields);
             } else {
                 return false;
             }
         } else {
             if (isset($qualifiedBroker->daily_cap)) {//incase if dailycap is set to zero
-                if($qualifiedBroker->daily_cap == 0)
+                if ($qualifiedBroker->daily_cap == 0)
                     return false;
             }
-            
+
             $leadTypeMatched = false;
 
             foreach ($qualifiedBroker->lead_requests[0] as $key => $leadRequest) {
@@ -84,7 +134,7 @@ class Firebase {
             if (!$leadTypeMatched)
                 return false;
 
-            
+
             if (isset($qualifiedBroker->preferred_zip)) {
                 if (!preg_match($qualifiedBroker->preferred_zip, $customerFields['zip'])) {
                     return false;
@@ -101,7 +151,8 @@ class Firebase {
                 $app->log->debug('[' . date('H:i:s', time()) . '] HubSpot Contact Response Body: ' . json_encode($hsResponse));
             }
 
-            $firebase->set($thisMonth . $qualifiedBrokerKey . "/lead_assigment/" . $todayDay, 1);
+            $customerFields["broker_email"] = $qualifiedBroker->email;
+            $firebase->set($thisMonth . $qualifiedBrokerKey . "/assigned/" . $todayDay . "/0", $customerFields);
         }
 
         return true;

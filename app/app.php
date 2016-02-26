@@ -1311,11 +1311,11 @@ $app->group('/finder', function () use ($app) {
 
 
         //Setting original soure code here
-        /*require_once('app/lib/hubspotext.php');
-        $hubspotExt = new Custom\Libs\HubSpotExt();
-        $form_fields = $hubspotExt->getSourceInformation($form_fields, 'finder', $hubspot);
-        */
-        
+        /* require_once('app/lib/hubspotext.php');
+          $hubspotExt = new Custom\Libs\HubSpotExt();
+          $form_fields = $hubspotExt->getSourceInformation($form_fields, 'finder', $hubspot);
+         */
+
         $hsResponse = $hubspot->contacts()->create_contact($form_fields);
 
 
@@ -1537,7 +1537,58 @@ $app->group('/misc', function () use ($app) {
         //print preg_match('/^(4[0|1][1-9]{1}[0-9]{1})$/',$zip);//James Grady
     });
 
+    $app->post("/track_manual_assignments", function() use ($app) {
+        $entityBody = $app->request->getBody();
+        $hubspotData = json_decode($entityBody);
+
+        $appConfig = $app->config('custom');
+        $firebase = new \Firebase\FirebaseLib($appConfig['firebase']['config']['FIREBASE_APP_URL'], $appConfig['firebase']['config']['FIREBASE_TOKEN']);
+
+        $customerFields = array();
+        $customerFields['vid'] = $hubspotData->vid;
+        //extracting contact information from HubSpot
+        foreach ($hubspotData->properties as $key => $property) {
+            if ($key == "zip" || $key == "loan_purpose" || $key == "email" || $key == "employment_type_" || $key == "credit_status" || $key == "dob" || $key == "broker_email") {
+                $customerFields[$key] = $property->value;
+            }
+        }
+
+
+        $app->log->debug('[' . date('H:i:s', time()) . '] Customer Fields: ' . json_encode($customerFields));
+
+
+        $thisMonth = "/" . date("m-Y") . "/";
+
+
+
+        if (date('H') >= $appConfig['firebase']['config']['daily_reset_hour']) {
+            $todayDay = date("d-m", strtotime("+1 days"));
+        } else {
+            $todayDay = date("d-m");
+        }
+
+
+        $brokers = json_decode($firebase->get("/" . date("m-Y")));
+        
+        foreach ($brokers as $key => $broker) {
+
+            if ($broker->email == $customerFields['broker_email']) {
+                //making sure rollover are taken in account
+                if (!isset($broker->roll_overs->$todayDay)) {
+                    $todayDay = date("d-m");
+                }
+                if(isset($broker->assigned->$todayDay)) 
+                    $assignmentKey = count($broker->assigned->$todayDay);
+                else
+                    $assignmentKey = 0;
+
+                $firebase->set($thisMonth . $key . "/assigned/" . $todayDay . "/".$assignmentKey, $customerFields);
+            }
+        }
+    });
+
     $app->post("/lead_distribution", function() use ($app) {
+
 
         $entityBody = $app->request->getBody();
         $hubspotData = json_decode($entityBody);
@@ -1560,7 +1611,7 @@ $app->group('/misc', function () use ($app) {
         }
 
         $app->log->debug('[' . date('H:i:s', time()) . '] Customer Fields: ' . json_encode($customerFields));
-        $eligibleBrokers = json_decode($firebase->get("/02-2016"));
+        $eligibleBrokers = json_decode($firebase->get("/" . date("m-Y")));
 
         $error = 0;
         //Checking  Employment Status
@@ -1611,7 +1662,6 @@ $app->group('/misc', function () use ($app) {
 
         $brokerArr = array();
         foreach ($eligibleBrokers as $broker) {
-            $app->log->debug('[' . date('H:i:s', time()) . '] WARNING: Lead not assigned, no broker qualified.');
             $brokerArr[] = $broker;
         }
 
