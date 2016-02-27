@@ -1546,9 +1546,12 @@ $app->group('/misc', function () use ($app) {
 
         $customerFields = array();
         $customerFields['vid'] = $hubspotData->vid;
+        $profile_url_key = "profile-url";
+        $customerFields['profile_url'] = $hubspotData->$profile_url_key;
+        
         //extracting contact information from HubSpot
         foreach ($hubspotData->properties as $key => $property) {
-            if ($key == "zip" || $key == "loan_purpose" || $key == "email" || $key == "employment_type_" || $key == "credit_status" || $key == "dob" || $key == "broker_email") {
+            if ($key == "firstname" || $key == "lastname" || $key == "zip" || $key == "loan_purpose" || $key == "email" || $key == "employment_type_" || $key == "credit_status" || $key == "dob" || $key == "broker_email") {
                 $customerFields[$key] = $property->value;
             }
         }
@@ -1603,9 +1606,12 @@ $app->group('/misc', function () use ($app) {
 
         $customerFields = array();
         $customerFields['vid'] = $hubspotData->vid;
+        $profile_url_key = "profile-url";
+        $customerFields['profile_url'] = $hubspotData->$profile_url_key;
+        
         //extracting contact information from HubSpot
         foreach ($hubspotData->properties as $key => $property) {
-            if ($key == "zip" || $key == "loan_purpose" || $key == "email" || $key == "employment_type_" || $key == "credit_status" || $key == "dob" || $key == "broker_email") {
+            if ($key == "firstname" || $key == "lastname" || $key == "zip" || $key == "loan_purpose" || $key == "email" || $key == "employment_type_" || $key == "credit_status" || $key == "dob" || $key == "broker_email") {
                 $customerFields[$key] = $property->value;
             }
         }
