@@ -1548,7 +1548,7 @@ $app->group('/misc', function () use ($app) {
         $customerFields['vid'] = $hubspotData->vid;
         $profile_url_key = "profile-url";
         $customerFields['profile_url'] = $hubspotData->$profile_url_key;
-        
+
         //extracting contact information from HubSpot
         foreach ($hubspotData->properties as $key => $property) {
             if ($key == "firstname" || $key == "lastname" || $key == "zip" || $key == "loan_purpose" || $key == "email" || $key == "employment_type_" || $key == "credit_status" || $key == "dob" || $key == "broker_email") {
@@ -1572,20 +1572,27 @@ $app->group('/misc', function () use ($app) {
 
 
         $brokers = json_decode($firebase->get("/" . date("m-Y")));
-        
+
         foreach ($brokers as $key => $broker) {
 
             if ($broker->email == $customerFields['broker_email']) {
-                //making sure rollover are taken in account
-                if (!isset($broker->roll_overs->$todayDay)) {
-                    $todayDay = date("d-m");
-                }
-                if(isset($broker->assigned->$todayDay)) 
+
+
+                if (isset($broker->assigned->$todayDay)) {
+                    //making sure the lead was not already assigned to broker today
+                    foreach ($broker->assigned->$todayDay as $lead) {
+                        if ($lead->email == $customerFields['email']) {
+                            $app->log->debug('[' . date('H:i:s', time()) . '] WARNING: Lead already assigned to '.$broker->name);
+                            return;
+                        }
+                    }
+
                     $assignmentKey = count($broker->assigned->$todayDay);
-                else
+                } else
                     $assignmentKey = 0;
 
-                $firebase->set($thisMonth . $key . "/assigned/" . $todayDay . "/".$assignmentKey, $customerFields);
+                $firebase->set($thisMonth . $key . "/assigned/" . $todayDay . "/" . $assignmentKey, $customerFields);
+                return;
             }
         }
     });
@@ -1608,7 +1615,7 @@ $app->group('/misc', function () use ($app) {
         $customerFields['vid'] = $hubspotData->vid;
         $profile_url_key = "profile-url";
         $customerFields['profile_url'] = $hubspotData->$profile_url_key;
-        
+
         //extracting contact information from HubSpot
         foreach ($hubspotData->properties as $key => $property) {
             if ($key == "firstname" || $key == "lastname" || $key == "zip" || $key == "loan_purpose" || $key == "email" || $key == "employment_type_" || $key == "credit_status" || $key == "dob" || $key == "broker_email") {
