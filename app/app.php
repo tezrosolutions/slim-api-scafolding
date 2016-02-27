@@ -1582,7 +1582,7 @@ $app->group('/misc', function () use ($app) {
                     //making sure the lead was not already assigned to broker today
                     foreach ($broker->assigned->$todayDay as $lead) {
                         if ($lead->email == $customerFields['email']) {
-                            $app->log->debug('[' . date('H:i:s', time()) . '] WARNING: Lead already assigned to '.$broker->name);
+                            $app->log->debug('[' . date('H:i:s', time()) . '] WARNING: Lead already tracked and assigned to '.$broker->name);
                             return;
                         }
                     }
