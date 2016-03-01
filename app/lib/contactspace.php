@@ -33,8 +33,12 @@ class ContactSpace {
                     $key == "broker_email" || $key == "business_no" || $key == "hear_from" || $key == "zip" ||
                     $key == "contactspace_id" || $key == "interest_rate" || $key == "settlement_dt" ||
                     $key == "vehicle_make" || $key == "vehicle_variant" || $key == "broker_full_name" ||
-                    $key == "bankers" || $key == "createdate")
+                    $key == "bankers" || $key == "createdate" || $key == "broker_email")
                 $fields[$key] = $property->value;
+        }
+        
+        if(isset($fields['broker_email'])) {
+            return array(200, 'ContactSpace Sync Error: Record already assigned to a broker');
         }
 
         if ($checkDup) {
