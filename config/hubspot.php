@@ -49,7 +49,9 @@ $geniusHSDealStagesMap = array(
     'genius_settled' => 'closedwon',
     'genius_new_sms' => 'closedwon',
     'genius_activated' => 'closedwon',
-    'genius_settled_irregular' => 'closedwon'
+    'genius_settled_irregular' => 'closedwon',
+    'genius_in_progress_settled' => 'follow_up',
+
 );
 
 

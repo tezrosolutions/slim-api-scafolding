@@ -1582,7 +1582,7 @@ $app->group('/misc', function () use ($app) {
                     //making sure the lead was not already assigned to broker today
                     foreach ($broker->assigned->$todayDay as $lead) {
                         if ($lead->email == $customerFields['email']) {
-                            $app->log->debug('[' . date('H:i:s', time()) . '] WARNING: Lead already tracked and assigned to '.$broker->name);
+                            $app->log->debug('[' . date('H:i:s', time()) . '] WARNING: Lead already tracked and assigned to ' . $broker->name);
                             return;
                         }
                     }
@@ -1624,21 +1624,25 @@ $app->group('/misc', function () use ($app) {
         }
 
         $app->log->debug('[' . date('H:i:s', time()) . '] Customer Fields: ' . json_encode($customerFields));
-        $eligibleBrokers = json_decode($firebase->get("/" . date("m-Y")));
+        $month = date("m-Y");
+        $month = "02-2016";
+        $eligibleBrokers = json_decode($firebase->get("/" . $month));
 
         $error = 0;
         //Checking  Employment Status
-        if ($customerFields['employment_type_'] == "un_employed") {
-            $app->log->debug('[' . date('H:i:s', time()) . '] ERROR: Lead not assigned, lead emplyment status is unemployed.');
-            $error++;
+        if (isset($customerFields['employment_type_'])) {
+            if ($customerFields['employment_type_'] == "un_employed") {
+                $app->log->debug('[' . date('H:i:s', time()) . '] ERROR: Lead not assigned, lead emplyment status is unemployed.');
+                $error++;
+            }
         }
-
         //Checkin Credit Status
-        if ($customerFields['credit_status'] == "Bankruptcy") {
-            $app->log->debug('[' . date('H:i:s', time()) . '] ERROR: Lead not assigned, lead credit status is Bankruptcy.');
-            $error++;
+        if (isset($customerFields['credit_status'])) {
+            if ($customerFields['credit_status'] == "Bankruptcy") {
+                $app->log->debug('[' . date('H:i:s', time()) . '] ERROR: Lead not assigned, lead credit status is Bankruptcy.');
+                $error++;
+            }
         }
-
         if (isset($customerFields['dob'])) {
             $now = strtotime(date('Y-m-d')); // Today in UNIX Timestamp
             $dob = $customerFields['dob'] / 1000;
