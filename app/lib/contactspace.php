@@ -36,8 +36,8 @@ class ContactSpace {
                     $key == "bankers" || $key == "createdate" || $key == "broker_email")
                 $fields[$key] = $property->value;
         }
-        
         if(isset($fields['broker_email'])) {
+            $app->log->debug('[' . date('H:i:s', time()) . '] ContactSpace Sync Error: ContactSpace Sync Error: Record already assigned to: ' . $fields['broker_email']);
             return array(200, 'ContactSpace Sync Error: Record already assigned to a broker');
         }
 
