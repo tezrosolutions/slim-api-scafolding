@@ -1561,7 +1561,8 @@ $app->group('/misc', function () use ($app) {
 
 
         $thisMonth = "/" . date("m-Y") . "/";
-
+        if (date("t") == date("d"))
+            $thisMonth = "/" . date("m-Y", strtotime("+1 days")) . "/";
 
 
         if (date('H') >= $appConfig['firebase']['config']['daily_reset_hour']) {
@@ -1571,7 +1572,7 @@ $app->group('/misc', function () use ($app) {
         }
 
 
-        $brokers = json_decode($firebase->get("/" . date("m-Y")));
+        $brokers = json_decode($firebase->get("/" . $thisMonth));
 
         foreach ($brokers as $key => $broker) {
 
@@ -1624,8 +1625,11 @@ $app->group('/misc', function () use ($app) {
         }
 
         $app->log->debug('[' . date('H:i:s', time()) . '] Customer Fields: ' . json_encode($customerFields));
+        
         $month = date("m-Y");
-        $month = "02-2016";
+        if (date("t") == date("d")) {
+            $month = date("m-Y", strtotime("+1 days"));
+        }
         $eligibleBrokers = json_decode($firebase->get("/" . $month));
 
         $error = 0;
