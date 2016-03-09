@@ -180,7 +180,7 @@ class Stats {
         $message->from_email = 'stats@tezrosolutions.com';
         $message->from_name = 'Daily Stats';
 
-        $recipient->email = 'umair655@gmail.com';
+        $recipient->email = 'jane.tehau@1800approved.com.au';
         $recipient->name = 'Jane';
 
         // add the recipient to the message
