@@ -96,7 +96,6 @@ class Firebase {
             }
 
 
-            //@TODO Assignment should take in account total monthly assigments
             if ($dailyCap > $assignedToday && $monthCap > $assignedToday) {
                 $leadTypeMatched = false;
 

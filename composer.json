@@ -18,7 +18,9 @@
         "twig/twig": "1.15.0",
         "fungku/hubspot": "1.0.*",
         "tuupola/slim-basic-auth": "1.0.*",
-        "ktamas77/firebase-php": "dev-master"
+        "ktamas77/firebase-php": "dev-master",
+        "mandrill/mandrill": "1.0.*",
+        "jlinn/mandrill-api-php": "~1.0"
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "1.*",

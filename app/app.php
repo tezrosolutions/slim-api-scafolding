@@ -1537,65 +1537,39 @@ $app->group('/misc', function () use ($app) {
         //print preg_match('/^(4[0|1][1-9]{1}[0-9]{1})$/',$zip);//James Grady
     });
 
-    $app->post("/track_manual_assignments", function() use ($app) {
+
+    $app->get("/match_zip/:zip", function($zip) use ($app) {
+        //print preg_match('/^(^3[0-9]{3})$/',$zip);//Alister
+        //print preg_match('/^(4[7|8][0-9]{2})$/',$zip);//Damien
+        //print preg_match('/^(42[0-9]{2})$/',$zip);//Ryan
+        //print preg_match('/^(6[0-9]{3})$/',$zip);//Henry
+        //print preg_match('/^(4[4-6]{1}[0-9]{2})$/',$zip);//Wayne
+        //print preg_match('/^(4[1-3]{1}[0-9]{2})$/',$zip);//Jed
+        //print preg_match('/^(2[0-7]{1}[0-9]{2})$/',$zip);//Russel Dunn
+        //print preg_match('/^(5[0-9]{3})$/',$zip);//Russel Pelvin
+        print preg_match('/^(0[8|9][0-9]{2})$/', $zip); //Bronwyn
+        //print preg_match('/^(4[2-3]{1}[0-9]{2})$/',$zip);//Matthew
+        //print preg_match('/^(4[0|1][1-9]{1}[0-9]{1})$/',$zip);//James Grady
+    });
+
+    $app->get("/email_lead_distribution_stats", function() use ($app) {
         $entityBody = $app->request->getBody();
         $hubspotData = json_decode($entityBody);
 
         $appConfig = $app->config('custom');
         $firebase = new \Firebase\FirebaseLib($appConfig['firebase']['config']['FIREBASE_APP_URL'], $appConfig['firebase']['config']['FIREBASE_TOKEN']);
 
-        $customerFields = array();
-        $customerFields['vid'] = $hubspotData->vid;
-        $profile_url_key = "profile-url";
-        $customerFields['profile_url'] = $hubspotData->$profile_url_key;
-
-        //extracting contact information from HubSpot
-        foreach ($hubspotData->properties as $key => $property) {
-            if ($key == "firstname" || $key == "lastname" || $key == "zip" || $key == "loan_purpose" || $key == "email" || $key == "employment_type_" || $key == "credit_status" || $key == "dob" || $key == "broker_email") {
-                $customerFields[$key] = $property->value;
-            }
-        }
+        require_once('app/lib/stats.php');
 
 
-        $app->log->debug('[' . date('H:i:s', time()) . '] Customer Fields: ' . json_encode($customerFields));
-
-
-        $thisMonth = "/" . date("m-Y") . "/";
-        if (date("t") == date("d"))
-            $thisMonth = "/" . date("m-Y", strtotime("+1 days")) . "/";
-
-
-        if (date('H') >= $appConfig['firebase']['config']['daily_reset_hour']) {
-            $todayDay = date("d-m", strtotime("+1 days"));
-        } else {
-            $todayDay = date("d-m");
-        }
-
-
-        $brokers = json_decode($firebase->get("/" . $thisMonth));
-
-        foreach ($brokers as $key => $broker) {
-
-            if ($broker->email == $customerFields['broker_email']) {
-
-
-                if (isset($broker->assigned->$todayDay)) {
-                    //making sure the lead was not already assigned to broker today
-                    foreach ($broker->assigned->$todayDay as $lead) {
-                        if ($lead->email == $customerFields['email']) {
-                            $app->log->debug('[' . date('H:i:s', time()) . '] WARNING: Lead already tracked and assigned to ' . $broker->name);
-                            return;
-                        }
-                    }
-
-                    $assignmentKey = count($broker->assigned->$todayDay);
-                } else
-                    $assignmentKey = 0;
-
-                $firebase->set($thisMonth . $key . "/assigned/" . $todayDay . "/" . $assignmentKey, $customerFields);
-                return;
-            }
-        }
+        // instantiate mandrill objects
+        $mandrill = new Jlinn\Mandrill\Mandrill('5XYHkjEpZErrv0BCLwf8ww');
+        $message = new Jlinn\Mandrill\Struct\Message();
+        $recipient = new Jlinn\Mandrill\Struct\Recipient();
+       
+        $brokers = json_decode($firebase->get("/" . date("m-Y")));
+        \Custom\Libs\Stats::sendDailyLeadAssigmentEmail($brokers, date("d-m"), $mandrill, $message, $recipient);
+           
     });
 
     $app->post("/lead_distribution", function() use ($app) {
@@ -1625,7 +1599,7 @@ $app->group('/misc', function () use ($app) {
         }
 
         $app->log->debug('[' . date('H:i:s', time()) . '] Customer Fields: ' . json_encode($customerFields));
-        
+
         $month = date("m-Y");
         if (date("t") == date("d")) {
             $month = date("m-Y", strtotime("+1 days"));
@@ -1635,8 +1609,8 @@ $app->group('/misc', function () use ($app) {
         $error = 0;
         //Checking  Employment Status
         if (isset($customerFields['employment_type_'])) {
-            if ($customerFields['employment_type_'] == "un_employed") {
-                $app->log->debug('[' . date('H:i:s', time()) . '] ERROR: Lead not assigned, lead emplyment status is unemployed.');
+            if ($customerFields['employment_type_'] == "un_employed" || $customerFields['employment_type_'] == "pensioner") {
+                $app->log->debug('[' . date('H:i:s', time()) . '] ERROR: Lead not assigned, lead emplyment status is unemployed or pensioner.');
                 $error++;
             }
         }
